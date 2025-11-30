@@ -7,7 +7,6 @@ import psycopg2
 from psycopg2 import pool
 import os
 from functools import wraps
-import discord
 from datetime import datetime, timezone
 import io
 import json
