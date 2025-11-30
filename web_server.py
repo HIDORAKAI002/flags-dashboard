@@ -1,4 +1,3 @@
-# web_server.py
 import eventlet
 eventlet.monkey_patch()
 
@@ -19,7 +18,7 @@ CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_insecure_key_for_dev")
 PRIMARY_DOMAIN = os.environ.get("PRIMARY_DOMAIN", "http://127.0.0.1:5000")
-MASTER_USER_ID = "794610250375364629" # Your ID
+MASTER_USER_ID = "794610250375364629" 
 
 REDIRECT_URI = f"{PRIMARY_DOMAIN}/callback"
 BOT_INVITE_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&permissions=8&scope=bot%20applications.commands"
@@ -48,7 +47,6 @@ if DB_URL:
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
-
 # --- COMMAND LISTS ---
 MOD_COMMANDS = ['kick', 'ban', 'unban', 'timeout', 'clear', 'lock', 'unlock', 'fping', 'jail', 'unjail']
 UTILITY_COMMANDS = [
@@ -107,7 +105,6 @@ def owner_required(f):
             return redirect('/')
         return f(*args, **kwargs)
     return decorated_function
-
 # --- ROUTES ---
 
 @app.route('/')
@@ -296,8 +293,9 @@ def update_dashboard(guild_id):
     except: conn.rollback()
     finally: return_db(conn)
     return redirect(f'/dashboard/{guild_id}')
-
-# --- OWNER DASHBOARD & APIs ---
+# ==========================================
+# --- OWNER DASHBOARD & REAL DATA APIs ---
+# ==========================================
 
 @app.route('/owner')
 @login_required
@@ -309,28 +307,53 @@ def owner_dashboard():
     stats = {'total_servers': 0, 'total_users': 0}
     servers_list = []
     
+    usage_chart_labels = []
+    usage_chart_data = []
+    usage_server_labels = []
+    usage_server_data = []
+    chart_labels = []
+    chart_data = []
+    
     try:
-        # Get Bot's Guilds from Discord API
         bot_guilds = discord_api_request("/users/@me/guilds") or []
         stats['total_servers'] = len(bot_guilds)
         
+        guild_map = {g['id']: g['name'] for g in bot_guilds}
+
         with conn.cursor() as cursor:
-            # Total Users
             cursor.execute("SELECT COUNT(*) FROM users")
             stats['total_users'] = cursor.fetchone()[0]
             
-            # Get deactivated status
+            cursor.execute("SELECT interaction_type, COUNT(*) FROM command_logs GROUP BY interaction_type ORDER BY COUNT(*) DESC LIMIT 10")
+            for row in cursor.fetchall():
+                usage_chart_labels.append(row[0] or "Unknown")
+                usage_chart_data.append(row[1])
+
+            cursor.execute("SELECT guild_id, message_count FROM monthly_server_activity ORDER BY message_count DESC LIMIT 10")
+            for row in cursor.fetchall():
+                g_id = row[0]
+                count = row[1]
+                g_name = guild_map.get(g_id, f"Server {g_id}")
+                usage_server_labels.append(g_name)
+                usage_server_data.append(count)
+
+            cursor.execute("""
+                SELECT CASE WHEN message_count > 1000 THEN 'Very High' WHEN message_count > 500 THEN 'High' WHEN message_count > 100 THEN 'Medium' ELSE 'Low' END as activity_level, COUNT(*)
+                FROM monthly_server_activity GROUP BY activity_level
+            """)
+            for row in cursor.fetchall():
+                chart_labels.append(row[0])
+                chart_data.append(row[1])
+
             cursor.execute("SELECT guild_id, is_deactivated FROM guilds")
             deactivated_map = {row[0]: row[1] for row in cursor.fetchall()}
 
         for g in bot_guilds:
-            # Note: Member count isn't in /users/@me/guilds, but we can try to fetch specific guild info
-            # Doing this for every guild might be slow, so for now we assume placeholder or fetch on demand
             servers_list.append({
                 'id': g['id'],
                 'name': g['name'],
                 'icon_url': f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png" if g['icon'] else "https://cdn.discordapp.com/embed/avatars/0.png",
-                'member_count': "?", # Requires individual fetch
+                'member_count': "?",
                 'is_deactivated': deactivated_map.get(g['id'], False),
                 'has_admin': (int(g['permissions']) & 0x8) == 0x8
             })
@@ -341,47 +364,81 @@ def owner_dashboard():
     return render_template('owner_dashboard.html', 
                            user={"name": session['user_name'], "avatar_url": session['avatar_url']},
                            stats=stats, servers=servers_list,
-                           # Pass empty data for charts for now
-                           usage_chart_labels=[], usage_chart_data=[],
-                           usage_server_labels=[], usage_server_data=[],
-                           chart_labels=[], chart_data=[])
+                           usage_chart_labels=usage_chart_labels, usage_chart_data=usage_chart_data,
+                           usage_server_labels=usage_server_labels, usage_server_data=usage_server_data,
+                           chart_labels=chart_labels, chart_data=chart_data)
+
+@app.route('/api/owner/guild_stats/')
+@app.route('/api/owner/guild_stats/<guild_id>')
+@login_required
+@owner_required
+def api_guild_stats(guild_id="all"):
+    timespan = request.args.get('timespan', 'weekly')
+    conn = get_db()
+    if not conn: return jsonify({'success': False})
+    labels = []; data = []
+    try:
+        with conn.cursor() as cursor:
+            if timespan == 'weekly':
+                if guild_id == "all":
+                    cursor.execute("SELECT TO_CHAR(timestamp, 'Mon DD'), COUNT(*) FROM command_logs WHERE timestamp > NOW() - INTERVAL '7 days' GROUP BY TO_CHAR(timestamp, 'Mon DD'), DATE(timestamp) ORDER BY DATE(timestamp) ASC")
+                else:
+                    cursor.execute("SELECT TO_CHAR(timestamp, 'Mon DD'), COUNT(*) FROM command_logs WHERE guild_id = %s AND timestamp > NOW() - INTERVAL '7 days' GROUP BY TO_CHAR(timestamp, 'Mon DD'), DATE(timestamp) ORDER BY DATE(timestamp) ASC", (str(guild_id),))
+            elif timespan == 'daily':
+                if guild_id == "all":
+                    cursor.execute("SELECT TO_CHAR(timestamp, 'HH24:00'), COUNT(*) FROM command_logs WHERE timestamp > NOW() - INTERVAL '24 hours' GROUP BY TO_CHAR(timestamp, 'HH24:00') ORDER BY MIN(timestamp) ASC")
+                else:
+                    cursor.execute("SELECT TO_CHAR(timestamp, 'HH24:00'), COUNT(*) FROM command_logs WHERE guild_id = %s AND timestamp > NOW() - INTERVAL '24 hours' GROUP BY TO_CHAR(timestamp, 'HH24:00') ORDER BY MIN(timestamp) ASC", (str(guild_id),))
+            for row in cursor.fetchall():
+                labels.append(row[0])
+                data.append(row[1])
+        return jsonify({'success': True, 'labels': labels, 'data': data})
+    except Exception as e: return jsonify({'success': False})
+    finally: return_db(conn)
 
 @app.route('/owner/guild/<guild_id>/toggle', methods=['POST'])
 @login_required
 @owner_required
 def toggle_guild(guild_id):
-    data = request.get_json()
-    active = data.get('active', True)
-    conn = get_db()
+    data = request.get_json(); active = data.get('active', True); conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # Update is_deactivated. If active=True, is_deactivated=False
-            cursor.execute("INSERT INTO guilds (guild_id, is_deactivated) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET is_deactivated = %s", 
-                           (str(guild_id), not active, not active))
-        conn.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        return_db(conn)
+            cursor.execute("INSERT INTO guilds (guild_id, is_deactivated) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET is_deactivated = %s", (str(guild_id), not active, not active))
+        conn.commit(); return jsonify({'success': True})
+    except Exception as e: return jsonify({'success': False, 'error': str(e)}), 500
+    finally: return_db(conn)
 
 @app.route('/api/activity_heatmap/<guild_id>')
 @login_required
 def activity_heatmap(guild_id):
-    # Mock data for now to prevent 404s and chart errors
-    return jsonify({
-        'success': True,
-        'labels': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        'data': [0, 0, 0, 0, 0, 0, 0] 
-    })
+    conn = get_db()
+    if not conn: return jsonify({'success': False, 'error': 'DB Error'})
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT TO_CHAR(timestamp, 'Dy'), COUNT(*) FROM command_logs WHERE guild_id = %s AND timestamp > NOW() - INTERVAL '7 days' GROUP BY TO_CHAR(timestamp, 'Dy'), DATE(timestamp) ORDER BY DATE(timestamp) ASC", (str(guild_id),))
+            results = cursor.fetchall()
+        data_map = {row[0]: row[1] for row in results}
+        days = []; counts = []
+        for i in range(6, -1, -1):
+            day_label = (datetime.now() - timedelta(days=i)).strftime('%a')
+            days.append(day_label)
+            counts.append(data_map.get(day_label, 0))
+        return jsonify({'success': True, 'labels': days, 'data': counts})
+    except Exception as e: return jsonify({'success': False, 'error': str(e)})
+    finally: return_db(conn)
+
+@app.route('/api/update_latency', methods=['POST'])
+def update_latency():
+    data = request.get_json()
+    if data.get('secret') != "hidorakai002": return jsonify({'error': 'Unauthorized'}), 403
+    socketio.emit('latency_update', {'latency': data.get('latency')})
+    return jsonify({'success': True})
 
 @app.route('/owner/announce', methods=['POST'])
 @login_required
 @owner_required
 def owner_announce():
-    # This would need to talk to the bot via DB or IPC. 
-    # For decoupled setup, we can insert into a 'pending_announcements' table that the bot checks.
-    return "Announcement queued (Logic to be implemented via DB poll)", 200
+    return "Announcement feature requires DB polling implementation.", 200
 
 @app.route('/terms')
 def terms(): return render_template('tos.html', bot_info=get_bot_info())
