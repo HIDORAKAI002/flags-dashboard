@@ -39,14 +39,15 @@ if DB_URL:
             host=url.hostname,
             port=url.port
         )
-        print("Web Server: Connected to Database.")
+        print("✅ Web Server: Connected to Database.")
     except Exception as e:
-        print(f"Web Server: Failed to connect to DB: {e}")
+        print(f"❌ Web Server: Failed to connect to DB: {e}")
 
 # --- FLASK SETUP ---
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
 # --- COMMAND LISTS ---
 MOD_COMMANDS = ['kick', 'ban', 'unban', 'timeout', 'clear', 'lock', 'unlock', 'fping', 'jail', 'unjail']
 UTILITY_COMMANDS = [
@@ -75,14 +76,28 @@ def return_db(conn):
     if conn and db_pool: db_pool.putconn(conn)
 
 def discord_api_request(endpoint, method="GET", data=None):
-    if not BOT_TOKEN: return None
+    if not BOT_TOKEN: 
+        print("❌ Error: BOT_TOKEN is missing in Environment Variables.")
+        return None
+        
     headers = {"Authorization": f"Bot {BOT_TOKEN}", "Content-Type": "application/json"}
     url = f"https://discord.com/api/v10{endpoint}"
+    
     try:
         if method == "GET": resp = requests.get(url, headers=headers)
         elif method == "POST": resp = requests.post(url, headers=headers, json=data)
-        return resp.json() if resp.status_code in [200, 201] else None
-    except: return None
+        
+        if resp.status_code in [200, 201]:
+            return resp.json()
+        elif resp.status_code == 429:
+            print(f"⚠️ Rate Limited by Discord API on {endpoint}")
+            return None
+        else:
+            print(f"❌ Discord API Error ({resp.status_code}) on {endpoint}: {resp.text}")
+            return None
+    except Exception as e:
+        print(f"❌ Request Exception: {e}")
+        return None
 
 def get_bot_info():
     data = discord_api_request("/users/@me")
@@ -101,10 +116,12 @@ def login_required(f):
 def owner_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or str(session['user_id']) != MASTER_USER_ID:
-            return redirect('/')
+        if 'user_id' not in session: return redirect('/login')
+        if str(session['user_id']) != MASTER_USER_ID:
+            return "<h1>403 Forbidden: Only the Owner can access this page.</h1>", 403
         return f(*args, **kwargs)
     return decorated_function
+
 # --- ROUTES ---
 
 @app.route('/')
@@ -293,6 +310,7 @@ def update_dashboard(guild_id):
     except: conn.rollback()
     finally: return_db(conn)
     return redirect(f'/dashboard/{guild_id}')
+
 # ==========================================
 # --- OWNER DASHBOARD & REAL DATA APIs ---
 # ==========================================
@@ -302,7 +320,7 @@ def update_dashboard(guild_id):
 @owner_required
 def owner_dashboard():
     conn = get_db()
-    if not conn: return "DB Error", 500
+    if not conn: return "DB Connection Error", 500
     
     stats = {'total_servers': 0, 'total_users': 0}
     servers_list = []
@@ -311,24 +329,34 @@ def owner_dashboard():
     usage_chart_data = []
     usage_server_labels = []
     usage_server_data = []
-    chart_labels = []
+    chart_labels = [] 
     chart_data = []
     
     try:
-        bot_guilds = discord_api_request("/users/@me/guilds") or []
-        stats['total_servers'] = len(bot_guilds)
+        # 1. Get Bot's Guilds
+        print("Owner: Fetching guilds from Discord API...")
+        bot_guilds = discord_api_request("/users/@me/guilds")
         
+        if bot_guilds is None:
+             print("❌ Owner: Failed to fetch guilds. Check BOT_TOKEN.")
+             bot_guilds = [] # Avoid crash
+        
+        stats['total_servers'] = len(bot_guilds)
         guild_map = {g['id']: g['name'] for g in bot_guilds}
 
         with conn.cursor() as cursor:
+            # 2. Total Users
             cursor.execute("SELECT COUNT(*) FROM users")
-            stats['total_users'] = cursor.fetchone()[0]
+            row = cursor.fetchone()
+            if row: stats['total_users'] = row[0]
             
+            # 3. Usage by Category
             cursor.execute("SELECT interaction_type, COUNT(*) FROM command_logs GROUP BY interaction_type ORDER BY COUNT(*) DESC LIMIT 10")
             for row in cursor.fetchall():
                 usage_chart_labels.append(row[0] or "Unknown")
                 usage_chart_data.append(row[1])
 
+            # 4. Usage by Server
             cursor.execute("SELECT guild_id, message_count FROM monthly_server_activity ORDER BY message_count DESC LIMIT 10")
             for row in cursor.fetchall():
                 g_id = row[0]
@@ -337,6 +365,7 @@ def owner_dashboard():
                 usage_server_labels.append(g_name)
                 usage_server_data.append(count)
 
+            # 5. Server Distribution
             cursor.execute("""
                 SELECT CASE WHEN message_count > 1000 THEN 'Very High' WHEN message_count > 500 THEN 'High' WHEN message_count > 100 THEN 'Medium' ELSE 'Low' END as activity_level, COUNT(*)
                 FROM monthly_server_activity GROUP BY activity_level
@@ -345,6 +374,7 @@ def owner_dashboard():
                 chart_labels.append(row[0])
                 chart_data.append(row[1])
 
+            # 6. Deactivated Status
             cursor.execute("SELECT guild_id, is_deactivated FROM guilds")
             deactivated_map = {row[0]: row[1] for row in cursor.fetchall()}
 
@@ -358,6 +388,8 @@ def owner_dashboard():
                 'has_admin': (int(g['permissions']) & 0x8) == 0x8
             })
 
+    except Exception as e:
+        print(f"❌ Owner Dashboard Logic Error: {e}")
     finally:
         return_db(conn)
 
