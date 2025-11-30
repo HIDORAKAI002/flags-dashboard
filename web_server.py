@@ -1,4 +1,7 @@
 # web_server.py
+import eventlet
+eventlet.monkey_patch() # <--- THIS FIXES THE RECURSION ERROR
+
 from flask import Flask, request, redirect, render_template, session, jsonify
 from flask_socketio import SocketIO
 import requests
@@ -14,7 +17,10 @@ CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_insecure_key_for_dev")
+
 # NO CAPTCHA KEY NEEDED
+
+# Default to port 5000 for local, but Render sets PORT env var
 PRIMARY_DOMAIN = os.environ.get("PRIMARY_DOMAIN", "http://127.0.0.1:5000")
 
 REDIRECT_URI = f"{PRIMARY_DOMAIN}/callback"
@@ -39,11 +45,13 @@ if DB_URL:
         print("Web Server: Connected to Database.")
     except Exception as e:
         print(f"Web Server: Failed to connect to DB: {e}")
+else:
+    print("Web Server: DB_URL not set.")
 
 # --- FLASK SETUP ---
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # --- COMMAND LISTS ---
 MOD_COMMANDS = ['kick', 'ban', 'unban', 'timeout', 'clear', 'lock', 'unlock', 'fping', 'jail', 'unjail']
@@ -79,6 +87,11 @@ def discord_api_request(endpoint, method="GET", data=None):
     try:
         if method == "GET": resp = requests.get(url, headers=headers)
         elif method == "POST": resp = requests.post(url, headers=headers, json=data)
+        
+        if resp.status_code == 429:
+            print("Rate limited by Discord API")
+            return None
+            
         return resp.json() if resp.status_code in [200, 201] else None
     except: return None
 
@@ -135,6 +148,7 @@ def callback():
         
         return redirect('/select-server')
     except Exception as e:
+        print(f"Login Error: {e}")
         return f"Login Error: {e}", 500
 
 @app.route('/logout')
