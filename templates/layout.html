@@ -4,9 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ bot_info.name }} - Discord Bot{% endblock %}</title>
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
+    <style>
+        /* Base Styles Inspired by Reflect Notes & Original */
+        @keyframes hue-rotate {
+            0% { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(360deg); }
+        }
+
+        :root {
+            --primary-color: #5865F2; /* Discord blurple from original */
+            --text-primary-color: #ffffff;
+            --text-secondary-color: #b9bbbe; /* Discord grey */
+            --bg-primary-color: #030014; /* Reflect Dark BG */
+            --bg-secondary-color: #2c2f33; /* Discord Medium Dark */
+            --bg-tertiary-color: #202225; /* Discord Darker */
+            --accent-color-purple: #9382ff; /* Reflect Purple Accent */
+
+             /* Discord Mockup Palette (from original) */
+            --discord-bg-dark: #202225;
+            --discord-bg-medium: #2f3136;
+            --discord-bg-light: #36393f;
+            --discord-bg-input: #40444b;
+            --discord-text-normal: #dcddde;
+            --discord-text-muted: #b9bbbe;
+            --discord-text-darker: #a3a6aa;
+            --discord-text-placeholder: #72767d;
+            --discord-text-header: #ffffff;
+            --discord-text-channel: #8e9297;
+            --discord-border: #202225;
+            --discord-embed-bg: #2f3136;
+            --discord-blue: #5865F2;
+            --discord-red: #ED4245;
+            --discord-green: #43b581;
+            --discord-yellow: #faa61a;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            background-color: var(--bg-primary-color);
+            color: var(--text-primary-color);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* General Resets & Helpers */
+        h1, h2, h3, h4, h5, h6, p, body { margin: 0; }
+        ul { list-style: none; margin-block-end: 0; margin-block-start: 0; padding: 0; }
+        svg { display: block; max-width: 100%; height: auto; }
+        img { border: 0; display: block; object-fit: cover; max-width: 100%; height: auto;}
+        a { color: inherit; text-decoration: none; }
+        button { appearance: none; background-color: transparent; border: 0; cursor: pointer; text-transform: none; font-family: inherit; font-size: 100%; line-height: normal; margin: 0; vertical-align: baseline; }
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+        *:focus { outline: none; }
+
+        /* Selection Styles */
+        ::selection { background: rgba(147, 130, 255, .5); color: #fff; }
+        ::-moz-selection { background: rgba(147, 130, 255, .5); color: #fff; }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: inherit; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .05); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .1); }
+
+        /* Container Styles (Using original structure but can adapt) */
+        .container {
+            max-width: 1100px; /* From original CSS */
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        @media (max-width: 1200px) { .container { max-width: 960px; } }
+        @media (max-width: 992px) { .container { max-width: 720px; } }
+        @media (max-width: 768px) { .container { max-width: 540px; } }
+        @media (max-width: 576px) { .container { max-width: 100%; padding: 0 10px; } }
+
+
+        /* --- Floating Particles Background --- */
+        #bg-particles {
+            position: fixed; /* Cover entire viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2; /* Position behind everything */
+            pointer-events: none; /* Make it non-interactive */
+        }
+        /* --- End Floating Particles --- */
+
+
+        /* --- Original Header Structure & Styles --- */
+        header {
+            position: sticky; /* CHANGED to sticky for layout pages */
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%; /* Use % for responsiveness */
+            background: rgba(3, 0, 20, 0.5); /* Semi-transparent dark bg */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bot-info { display: flex; align-items: center; }
+        .bot-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid var(--primary-color);
+        }
+        .bot-info h1 { font-size: 1.5rem; color: var(--text-primary-color); cursor: pointer; /* Added for secret knock */}
+        nav { display: flex; align-items: center; }
+        .user-info { display: flex; align-items: center; margin-right: 20px; }
+        .user-info span { color: var(--text-secondary-color); margin-right: 10px; font-size: 0.9rem; }
+        .user-info img { width: 30px; height: 30px; border-radius: 50%; }
+        /* Keep original CTA Button styles */
+        .cta-btn {
+            padding: 10px 20px; border-radius: 5px; text-decoration: none;
+            font-weight: 500; transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            margin-left: 10px; display: inline-block; text-align: center;
+        }
+        .cta-btn.primary { background-color: var(--primary-color); color: white; }
+        .cta-btn.secondary { background-color: transparent; color: var(--text-secondary-color); border: 1px solid var(--text-secondary-color); }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); } /* Added shadow */
+        .cta-btn.primary:hover { background-color: #4752c4; }
+        .cta-btn.secondary:hover { background-color: var(--text-secondary-color); color: var(--bg-secondary-color); }
+        @media (max-width: 768px) {
+             header { padding: 10px 3%; }
+             .bot-info h1 { font-size: 1.2rem; }
+             .cta-btn { padding: 8px 15px; font-size: 0.9rem; margin-top: 5px; /* Add margin for wrapping */ }
+             nav { flex-wrap: wrap; justify-content: flex-end; }
+             .user-info { margin-bottom: 5px; width: 100%; justify-content: flex-end; margin-right: 0;}
+        }
+
+
+        /* --- NEW: Page Wrapper for Content --- */
+        /* This wrapper ensures content isn't hidden by the sticky header */
+        .page-wrapper {
+            padding: 40px 0; /* Add padding for content */
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 150px); /* Fill space between header/footer */
+        }
+        
+
+        /* --- Original Footer Styles --- */
+         footer {
+             text-align: center; padding: 40px 0; /* Increased padding */
+             margin-top: 50px; /* Increased margin */
+             background-color: rgba(0, 0, 0, 0.2);
+             border-top: 1px solid rgba(255, 255, 255, 0.1);
+             color: var(--text-secondary-color); font-size: 0.95rem; /* Slightly larger text */
+             position: relative; /* Keep in flow */
+             z-index: 1; /* Keep above particles */
+         }
+         /* Add specific styles for links if needed */
+         footer a { color: var(--primary-color); text-decoration: none; margin: 0 10px; }
+         footer a:hover { text-decoration: underline; }
+
+    </style>
     {% block head_style %}{% endblock %}
 </head>
 <body>
@@ -17,12 +180,12 @@
             {% if bot_info %}
             <a href="/" style="display: flex; align-items: center; text-decoration: none;">
                 <img src="{{ bot_info.avatar_url }}" alt="Bot Logo">
-                <h1>{{ bot_info.name }}</h1>
+                <h1 style="color: var(--text-primary-color);">{{ bot_info.name }}</h1>
             </a>
             {% else %}
             <a href="/" style="display: flex; align-items: center; text-decoration: none;">
                 <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Bot Logo" style="width: 40px; height: 40px; border-radius: 50%;">
-                <h1>FLAG'S</h1>
+                <h1 style="color: var(--text-primary-color);">FLAG'S</h1>
             </a>
             {% endif %}
         </div>
@@ -47,10 +210,36 @@
     
     <footer>
         © {% if bot_info %}{{ bot_info.name }}{% else %}FLAG'S{% endif %} - All rights reserved.
-        <a href="/terms">Terms of Service</a> | <a href="/privacy">Privacy Policy</a>
+        <a href="/tos" style="margin-left: 15px;">Terms of Service</a> | <a href="/privacy">Privacy Policy</a>
     </footer>
 
     <script>
+        // --- Core Interactions ---
+        function startInteractions() {
+            // -- Intersection Observer --
+            const observerOptions = { 
+                root: null, 
+                rootMargin: '0px', 
+                threshold: 0.5 
+            };
+            
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) { 
+                        entry.target.classList.add('is-visible'); 
+                    }
+                    else if (!entry.target.matches('#hero-section')) { 
+                        // Allow other sections to reset animation if they scroll out
+                         entry.target.classList.remove('is-visible'); 
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all sections and elements needing triggers
+            document.querySelectorAll('.scroll-section, #connected-features, .animate-on-scroll').forEach(el => observer.observe(el));
+        }
+
+
         // --- Floating Particles Background ---
         const particlesCanvas = document.getElementById('bg-particles');
         if (particlesCanvas) {
@@ -96,6 +285,8 @@
         
         // --- Initialization and Secret Knock ---
         document.addEventListener('DOMContentLoaded', () => {
+            startInteractions(); 
+            
             // Use .bot-info a as the clickable element
             const logoLink = document.querySelector('.bot-info a'); 
             if (logoLink) { 

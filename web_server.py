@@ -14,10 +14,9 @@ CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_insecure_key_for_dev")
-# HCAPTCHA REMOVED
+# NO CAPTCHA KEY NEEDED
 PRIMARY_DOMAIN = os.environ.get("PRIMARY_DOMAIN", "http://127.0.0.1:5000")
 
-# Derived configurations
 REDIRECT_URI = f"{PRIMARY_DOMAIN}/callback"
 BOT_INVITE_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&permissions=8&scope=bot%20applications.commands"
 
@@ -40,8 +39,6 @@ if DB_URL:
         print("Web Server: Connected to Database.")
     except Exception as e:
         print(f"Web Server: Failed to connect to DB: {e}")
-else:
-    print("Web Server: DB_URL not set.")
 
 # --- FLASK SETUP ---
 app = Flask(__name__)
@@ -92,8 +89,6 @@ def get_bot_info():
     return { "name": "FLAG'S", "avatar_url": "https://cdn.discordapp.com/embed/avatars/0.png" }
 
 # --- DECORATORS ---
-# CAPTCHA DECORATOR REMOVED
-
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -108,8 +103,6 @@ def home():
     bot_info = get_bot_info()
     user_info = { "name": session.get('user_name'), "avatar_url": session.get('avatar_url') } if 'user_id' in session else None
     return render_template('homepage.html', bot_info=bot_info, user=user_info, bot_invite_url=BOT_INVITE_URL)
-
-# VERIFY CAPTCHA ROUTE REMOVED
 
 @app.route('/login')
 def login():
@@ -286,6 +279,7 @@ def update_dashboard(guild_id):
                 roles = request.form.getlist(f'permissions_{cmd}')
                 for r in roles:
                     cursor.execute("INSERT INTO command_permissions (guild_id, command_name, role_id) VALUES (%s, %s, %s)", (str(guild_id), cmd, r))
+
         conn.commit()
     except: conn.rollback()
     finally: return_db(conn)
