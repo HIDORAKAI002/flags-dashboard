@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+{% block title %}Privacy Policy - Flags Bot{% endblock %}
+
+{% block content %}
+<style>
+    /* Shared styles with ToS */
+    .policy-content h2 {
+        font-size: 1.5rem;
+        color: var(--header-color);
+        margin-top: 2em;
+        margin-bottom: 1em;
+        padding-bottom: 0.5em;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    .policy-content h3 {
+        font-size: 1.2rem;
+        color: var(--header-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.8em;
+    }
+    .policy-content p, .policy-content ul {
+        color: var(--text-secondary-color);
+        line-height: 1.7;
+        margin-bottom: 1em;
+    }
+    .policy-content ul {
+        padding-left: 20px;
+    }
+    .policy-content li {
+        margin-bottom: 0.5em;
+    }
+    .policy-content strong {
+        color: var(--text-primary-color);
+        font-weight: 600;
+    }
+    .last-updated {
+        color: var(--text-secondary-color);
+        font-style: italic;
+        margin-bottom: 2em;
+        text-align: center;
+    }
+    .contact-info {
+        margin-top: 2em;
+        padding-top: 1em;
+        border-top: 1px solid var(--container-border-color);
+    }
+    /* Specific styling if needed */
+    .policy-content .sub-list {
+        padding-left: 25px;
+        margin-top: 0.5em;
+    }
+</style>
+
+<div class="policy-content">
+    <h1 style="text-align: center;">Privacy Policy for Flags Bot</h1>
+    <p class="last-updated"><strong>Last Updated:</strong> October 21, 2025</p> <p>This Privacy Policy outlines how <strong>Flags Bot</strong> ("the Bot") collects, uses, and shares information when you use it within a Discord server.</p>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>1. Information We Collect</h3>
+    <p>To provide its features, the Bot collects and stores the following information:</p>
+
+    <ul>
+        <li><strong>User Provided Information:</strong>
+            <ul class="sub-list">
+                <li>Your Discord User ID.</li>
+                <li>Your birthday (month and day only), if you choose to set it with the <code>/birthday set</code> command.</li>
+                <li>Your answers to introduction questions if you participate in the AI Introduction feature.</li>
+                <li>Banner images you upload via the dashboard.</li>
+            </ul>
+        </li>
+        <li><strong>Automatically Collected Information:</strong>
+            <ul class="sub-list">
+                <li>The Discord Server (Guild) ID where the Bot is used.</li>
+                <li>Game scores, levels, and XP from in-bot games like the flag quiz.</li>
+                <li>Spam offense counts for moderation purposes.</li>
+                <li>Nickname history when your nickname is changed.</li>
+                <li>Command usage logs (user ID, guild ID, command name, timestamp).</li>
+                <li>OAuth2 tokens (access and refresh) if you authorize via the website.</li>
+            </ul>
+        </li>
+        <li><strong>Temporarily Processed Information:</strong>
+            <ul class="sub-list">
+                <li>The content of your messages when you directly interact with the bot (e.g., by mentioning it or replying to it) is processed by third-party AI services to generate a response. This content is not stored long-term by the Bot.</li>
+                <li>The content of recent, highly-reacted-to messages within a channel is processed by third-party AI services to generate weekly highlights when the <code>/highlights</code> command is used. This data is processed in-memory and is not stored by the Bot.</li>
+                <li>hCaptcha responses via the website for verification.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>2. How We Use Your Information</h3>
+    <p>The data collected is used exclusively to operate the Bot's features, including but not limited to:</p>
+    <ul>
+        <li>Providing game and leaderboard functionality.</li>
+        <li>Announcing user birthdays in a configured channel.</li>
+        <li>Moderating spam and inappropriate nicknames.</li>
+        <li>Generating AI-powered chatbot responses and user introductions.</li>
+        <li>Creating weekly server highlights.</li>
+        <li>Enabling website dashboard functionality and server management.</li>
+        <li>Facilitating the community recovery feature (`?pull`, `?recover`) using stored OAuth2 tokens.</li>
+        <li>Displaying welcome banners using uploaded images.</li>
+        <li>Logging interactions for analytics displayed on the owner dashboard.</li>
+        <li>Verifying human users on the website via hCaptcha.</li>
+    </ul>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>3. Sharing with Third Parties</h3>
+    <p>To provide AI-powered features, message content is shared with the following third-party services:</p>
+    <ul>
+        <li><strong>Groq:</strong> For generating chatbot responses, user introductions, and analyzing weekly highlights.</li>
+        <li><strong>Mistral AI:</strong> As a fallback for generating chatbot responses.</li>
+        <li><strong>Google Gemini:</strong> As a fallback for generating chatbot responses.</li>
+    </ul>
+    <p>Additionally, for website verification:</p>
+    <ul>
+        <li><strong>hCaptcha:</strong> User interaction data is shared with hCaptcha when you complete the verification step on our website.</li>
+    </ul>
+    <p>Uploaded banner images are stored via Discord's CDN after being posted to a private channel. This data is sent to these services solely for the purpose of generating a response or analysis for the Bot's features or verifying website access. We do not sell or share your personal data with any other third parties for marketing or unrelated purposes.</p>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>4. Your Rights and Data Control</h3>
+    <p>You have control over some of your data:</p>
+    <ul>
+        <li>You can remove your birthday information at any time by using the <code>/birthday remove</code> command.</li>
+        <li>You can deauthorize the application via Discord's User Settings -> Authorized Apps, which invalidates the stored OAuth2 tokens.</li>
+        <li>To request the removal of all other data associated with your User ID (scores, logs, etc.), please contact the bot operator. Note that removing necessary data may impact your ability to use certain bot features.</li>
+    </ul>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+   <h3>5. Contact Us</h3>
+    <p>If you have any questions about this Privacy Policy, you can reach out via Discord:</p>
+    <p class="contact-info">
+        <strong>
+            <a href="https://discord.com/users/794610250375364629" target="_blank" rel="noopener noreferrer"
+               style="color: var(--primary-color); text-decoration: underline; transition: color 0.2s ease;"
+               onmouseover="this.style.color='var(--secondary-color)'"
+               onmouseout="this.style.color='var(--primary-color)'">
+                Shammy (Discord: shammy4902)
+            </a>
+        </strong>
+    </p>
+
+</div>
+{% endblock %}

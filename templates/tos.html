@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+{% block title %}Terms of Service - Flags Bot{% endblock %}
+
+{% block content %}
+<style>
+    /* Add specific styles for ToS/Privacy pages if needed */
+    .policy-content h2 {
+        font-size: 1.5rem;
+        color: var(--header-color);
+        margin-top: 2em;
+        margin-bottom: 1em;
+        padding-bottom: 0.5em;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    .policy-content h3 {
+        font-size: 1.2rem;
+        color: var(--header-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.8em;
+    }
+    .policy-content p, .policy-content ul {
+        color: var(--text-secondary-color);
+        line-height: 1.7;
+        margin-bottom: 1em;
+    }
+    .policy-content ul {
+        padding-left: 20px;
+    }
+    .policy-content li {
+        margin-bottom: 0.5em;
+    }
+    .policy-content strong {
+        color: var(--text-primary-color);
+        font-weight: 600;
+    }
+    .last-updated {
+        color: var(--text-secondary-color);
+        font-style: italic;
+        margin-bottom: 2em;
+        text-align: center;
+    }
+    .contact-info {
+        margin-top: 2em;
+        padding-top: 1em;
+        border-top: 1px solid var(--container-border-color);
+    }
+</style>
+
+<div class="policy-content">
+    <h1 style="text-align: center;">Terms of Service for Flags Bot</h1>
+    <p class="last-updated"><strong>Last Updated:</strong> October 21, 2025</p> <p>By adding or using <strong>Flags Bot</strong> ("the Bot") in your Discord server, you agree to these Terms of Service.</p>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>1. Acceptable Use</h3>
+    <p>You agree not to use the Bot for any of the following purposes:</p>
+    <ul>
+        <li>To abuse its commands, such as spamming or using them for unintended purposes.</li>
+        <li>To engage in any activity that is unlawful, harmful, or violates Discord's own Terms of Service.</li>
+        <li>To attempt to exploit or disrupt the Bot's operation.</li>
+    </ul>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>2. Bot Functionality</h3>
+    <p>The Bot provides a variety of features including games (such as the flag quiz), moderation tools, birthday announcements, weekly highlights, and AI-powered chat.</p>
+    <p>We reserve the right to add, remove, or modify features at any time without prior notice. The Bot is provided <strong>"as-is"</strong> and we make no guarantees regarding its availability, reliability, or performance.</p>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+    <h3>3. Termination</h3>
+    <p>We reserve the right to block any user or remove the Bot from any server at our discretion, particularly for violations of these terms or abuse of the Bot’s features.</p>
+
+    <hr style="border-color: var(--container-border-color); margin: 2em 0;">
+
+   <h3>4. Contact Us</h3>
+    <p>If you have any questions about these Terms of Service, you can reach out via Discord:</p>
+    <p class="contact-info">
+        <strong>
+            <a href="https://discord.com/users/794610250375364629" target="_blank" rel="noopener noreferrer"
+               style="color: var(--primary-color); text-decoration: underline; transition: color 0.2s ease;"
+               onmouseover="this.style.color='var(--secondary-color)'"
+               onmouseout="this.style.color='var(--primary-color)'">
+                Shammy (Discord: shammy4902)
+            </a>
+        </strong>
+    </p>
+
+</div>
+{% endblock %}

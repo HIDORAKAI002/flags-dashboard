@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bot_info.name }} - Discord Bot</title>
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+    <style>
+        /* Base Styles Inspired by Reflect Notes & Original */
+        @keyframes hue-rotate {
+            0% { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(360deg); }
+        }
+
+        :root {
+            --primary-color: #5865F2; /* Discord blurple from original */
+            --text-primary-color: #ffffff;
+            --text-secondary-color: #b9bbbe; /* Discord grey */
+            --bg-primary-color: #030014; /* Reflect Dark BG */
+            --bg-secondary-color: #2c2f33; /* Discord Medium Dark */
+            --bg-tertiary-color: #202225; /* Discord Darker */
+            --accent-color-purple: #9382ff; /* Reflect Purple Accent */
+
+             /* Discord Mockup Palette (from original) */
+            --discord-bg-dark: #202225;
+            --discord-bg-medium: #2f3136;
+            --discord-bg-light: #36393f;
+            --discord-bg-input: #40444b;
+            --discord-text-normal: #dcddde;
+            --discord-text-muted: #b9bbbe;
+            --discord-text-darker: #a3a6aa;
+            --discord-text-placeholder: #72767d;
+            --discord-text-header: #ffffff;
+            --discord-text-channel: #8e9297;
+            --discord-border: #202225;
+            --discord-embed-bg: #2f3136;
+            --discord-blue: #5865F2;
+            --discord-red: #ED4245;
+            --discord-green: #43b581;
+            --discord-yellow: #faa61a;
+        }
+
+        /* Consider hosting fonts locally */
+        /* @font-face { src: url({{ url_for('static', filename='fonts/AeonikPro-Medium.woff2') }}) format('woff2'), url({{ url_for('static', filename='fonts/AeonikPro-Medium.woff') }}) format('woff'); font-display: swap; font-family: AeonikPro; font-weight: 500; } */
+        /* @font-face { src: url({{ url_for('static', filename='fonts/Inter-Medium.woff2') }}) format('woff2'), url({{ url_for('static', filename='fonts/Inter-Medium.woff') }}) format('woff'); font-display: swap; font-family: Inter; font-weight: 500; } */
+        /* @font-face { src: url({{ url_for('static', filename='fonts/Inter-Regular.woff2') }}) format('woff2'), url({{ url_for('static', filename='fonts/Inter-Regular.woff') }}) format('woff'); font-display: swap; font-family: Inter; font-weight: 400; } */
+
+        body {
+            background-color: var(--bg-primary-color);
+            color: var(--text-primary-color);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* General Resets & Helpers */
+        h1, h2, h3, h4, h5, h6, p, body { margin: 0; }
+        ul { list-style: none; margin-block-end: 0; margin-block-start: 0; padding: 0; }
+        svg { display: block; max-width: 100%; height: auto; }
+        img { border: 0; display: block; object-fit: cover; max-width: 100%; height: auto;}
+        a { color: inherit; text-decoration: none; }
+        button { appearance: none; background-color: transparent; border: 0; cursor: pointer; text-transform: none; font-family: inherit; font-size: 100%; line-height: normal; margin: 0; vertical-align: baseline; }
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+        *:focus { outline: none; }
+
+        /* Selection Styles */
+        ::selection { background: rgba(147, 130, 255, .5); color: #fff; }
+        ::-moz-selection { background: rgba(147, 130, 255, .5); color: #fff; }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: inherit; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .05); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .1); }
+
+        /* Container Styles (Using original structure but can adapt) */
+        .container {
+            max-width: 1100px; /* From original CSS */
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        @media (max-width: 1200px) { .container { max-width: 960px; } }
+        @media (max-width: 992px) { .container { max-width: 720px; } }
+        @media (max-width: 768px) { .container { max-width: 540px; } }
+        @media (max-width: 576px) { .container { max-width: 100%; padding: 0 10px; } }
+
+
+        /* --- Floating Particles Background --- */
+        #bg-particles {
+            position: fixed; /* Cover entire viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2; /* Position behind everything */
+            pointer-events: none; /* Make it non-interactive */
+        }
+        /* --- End Floating Particles --- */
+
+
+        /* --- Original Header Structure & Styles --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%; /* Use % for responsiveness */
+            background: rgba(3, 0, 20, 0.5); /* Semi-transparent dark bg */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bot-info { display: flex; align-items: center; }
+        .bot-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid var(--primary-color);
+        }
+        .bot-info h1 { font-size: 1.5rem; color: var(--text-primary-color); cursor: pointer; /* Added for secret knock */}
+        nav { display: flex; align-items: center; }
+        .user-info { display: flex; align-items: center; margin-right: 20px; }
+        .user-info span { color: var(--text-secondary-color); margin-right: 10px; font-size: 0.9rem; }
+        .user-info img { width: 30px; height: 30px; border-radius: 50%; }
+        /* Keep original CTA Button styles */
+        .cta-btn {
+            padding: 10px 20px; border-radius: 5px; text-decoration: none;
+            font-weight: 500; transition: background-color 0.3s, color 0.3s, transform 0.2s;
+            margin-left: 10px; display: inline-block; text-align: center;
+        }
+        .cta-btn.primary { background-color: var(--primary-color); color: white; }
+        .cta-btn.secondary { background-color: transparent; color: var(--text-secondary-color); border: 1px solid var(--text-secondary-color); }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); } /* Added shadow */
+        .cta-btn.primary:hover { background-color: #4752c4; }
+        .cta-btn.secondary:hover { background-color: var(--text-secondary-color); color: var(--bg-secondary-color); }
+        @media (max-width: 768px) {
+             header { padding: 10px 3%; }
+             .bot-info h1 { font-size: 1.2rem; }
+             .cta-btn { padding: 8px 15px; font-size: 0.9rem; margin-top: 5px; /* Add margin for wrapping */ }
+             nav { flex-wrap: wrap; justify-content: flex-end; }
+             .user-info { margin-bottom: 5px; width: 100%; justify-content: flex-end; margin-right: 0;}
+        }
+
+
+        /* --- Original Hero Section & Styles --- */
+        #hero-section {
+            min-height: 100vh; /* <-- CHANGED to 100vh */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 140px 20px 60px; /* Increased padding top */
+            position: relative; /* Needed for ripple container */
+            overflow: hidden; /* Needed for ripple and bg shapes */
+            background: linear-gradient(180deg, rgba(3, 0, 20, 0) 0%, rgba(88, 101, 242, 0.05) 100%); /* Subtle gradient */
+            z-index: 1; /* Added z-index */
+        }
+         /* --- Ripple Effect --- (Placed within Hero) */
+        .ripple-container {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 1px; height: 1px;
+            z-index: 1; pointer-events: none;
+        }
+        .ripple-circle {
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px;
+            border: 2px solid rgba(147, 130, 255, 0.5); /* Theme color */
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0); opacity: 0; pointer-events: none;
+        }
+        #hero-section.is-visible .ripple-circle { animation: ripple-expand 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        #hero-section.is-visible .ripple-circle:nth-child(2) { animation-delay: 0.4s; }
+        #hero-section.is-visible .ripple-circle:nth-child(3) { animation-delay: 0.8s; }
+        @keyframes ripple-expand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            80% { opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(40); opacity: 0; } /* Adjust scale factor */
+        }
+         .hero-content { /* Ensure content stays above ripple */
+             position: relative; z-index: 2;
+         }
+        /* --- End Ripple Effect --- */
+
+        .hero-title { font-size: 3.5rem; margin-bottom: 20px; line-height: 1.2; color: var(--text-primary-color); }
+        .hero-subtitle { font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px; color: var(--text-secondary-color); line-height: 1.6; }
+        #hero-section .cta-buttons a { margin: 0 10px; } /* Override header margin */
+
+        /* Original Background Shapes */
+        .hero-bg-shape {
+            position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, rgba(88, 101, 242, 0.15) 0%, rgba(88, 101, 242, 0) 70%);
+            z-index: 0; pointer-events: none;
+            animation: float 6s ease-in-out infinite alternate;
+        }
+        .hero-bg-shape.one { width: 400px; height: 400px; top: 10%; left: 15%; animation-delay: -2s; }
+        .hero-bg-shape.two { width: 300px; height: 300px; bottom: 15%; right: 20%; animation-delay: 0s; }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-15px); }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
+            .hero-subtitle { font-size: 1rem; }
+            .hero-bg-shape.one { width: 300px; height: 300px; }
+            .hero-bg-shape.two { width: 200px; height: 200px; }
+        }
+
+
+        /* --- Connected Lines Animation Section (NEW Section) --- */
+        .connected-features {
+            padding: 100px 0 60px 0; position: relative; min-height: 500px;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+            z-index: 1; /* Added z-index */
+            /* margin-top: 30vh; */ /* <-- REMOVED this line */
+        }
+        /* Reflect Section Header Styles (Applied here for consistency) */
+        .section-header { position: relative; z-index: 3; }
+        .section-header-title { text-align: center; }
+        .section-header-title span { background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, .7) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; display: block; }
+        .font-aeonik { font-family: 'AeonikPro', system-ui, sans-serif; font-feature-settings: unset; font-weight: 500;} /* Define base Aeonik */
+        .font-aeonik-h3 { font-size: 48px; line-height: 56px; } /* Define H3 size */
+        @media (max-width: 1248px) { .font-aeonik-h3 { font-size: 36px; line-height: 40px; } } /* Responsive H3 size */
+
+         .connected-features-container { position: relative; width: 650px; height: 450px; }
+        .feature-node {
+            position: absolute; transform: translate(-50%, -50%) scale(0); opacity: 0;
+            width: 110px; text-align: center;
+            transition: opacity 0.6s ease 0.2s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s; /* Slightly slower transition */
+            z-index: 2;
+        }
+        .feature-node .node-circle {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: rgba(147, 130, 255, 0.1); border: 1px solid rgba(147, 130, 255, 0.3);
+            margin: 0 auto 10px auto; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; color: rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease; /* Add hover effect */
+        }
+         .feature-node:hover .node-circle {
+             transform: scale(1.1); /* Slightly enlarge on hover */
+             background: rgba(147, 130, 255, 0.2);
+         }
+        .feature-node .node-label { font-size: 13px; color: #afaccc; line-height: 1.4; }
+        
+        .feature-node.central { /* Specific style for central node */
+            width: 130px; top: 50%; left: 50%;
+            z-index: 3; /* Ensure central is on top */
+        }
+        .feature-node.central .node-circle { width: 90px; height: 90px; background: rgba(147, 130, 255, 0.2); font-size: 18px; font-weight: 500; color: #fff;}
+        .feature-node.central .node-label { font-size: 15px; color: #fff; font-weight: 500; }
+
+        /* Wrapper for outer nodes */
+        .outer-nodes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+        
+        /* Asymmetrical Sizes - Example */
+        .outer-nodes .feature-node:nth-of-type(1) .node-circle,
+        .outer-nodes .feature-node:nth-of-type(4) .node-circle { width: 70px; height: 70px; } /* Slightly larger */
+        .outer-nodes .feature-node:nth-of-type(3) .node-circle,
+        .outer-nodes .feature-node:nth-of-type(6) .node-circle { width: 60px; height: 60px; } /* Slightly smaller */
+
+        /* Positioning for outer nodes */
+        .outer-nodes .feature-node:nth-of-type(1) { top: 15%; left: 15%; }
+        .outer-nodes .feature-node:nth-of-type(2) { top: 15%; left: 85%; }
+        .outer-nodes .feature-node:nth-of-type(3) { top: 50%; left: 5%; }
+        .outer-nodes .feature-node:nth-of-type(4) { top: 50%; left: 95%; }
+        .outer-nodes .feature-node:nth-of-type(5) { top: 85%; left: 15%; }
+        .outer-nodes .feature-node:nth-of-type(6) { top: 85%; left: 85%; }
+
+        .feature-lines svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; pointer-events: none; }
+        .feature-lines path { fill: none; stroke: rgba(147, 130, 255, 0.3); stroke-width: 1px; stroke-dasharray: 500; stroke-dashoffset: 500; transition: stroke-dashoffset 1.8s cubic-bezier(0.45, 0, 0.55, 1) 0.3s; /* Slower line draw */ }
+
+        /* Trigger Animation with Varied Timing */
+        #connected-features.is-visible .feature-node { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #connected-features.is-visible .feature-node.central { transition-delay: 0.1s; } /* Center first */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(1) { transition-delay: 0.5s; } /* Top-left */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(2) { transition-delay: 0.95s; } /* Top-right */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(3) { transition-delay: 1.1s; } /* Mid-left */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(4) { transition-delay: 0.65s; } /* Mid-right */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(5) { transition-delay: 0.8s; } /* Bottom-left */
+        #connected-features.is-visible .outer-nodes .feature-node:nth-of-type(6) { transition-delay: 1.25s; } /* Bottom-right */
+
+        #connected-features.is-visible .feature-lines path { stroke-dashoffset: 0; }
+        /* Varied line drawing delays */
+        #connected-features.is-visible .feature-lines path:nth-of-type(1) { transition-delay: 0.3s; }
+        #connected-features.is-visible .feature-lines path:nth-of-type(2) { transition-delay: 0.75s; }
+        #connected-features.is-visible .feature-lines path:nth-of-type(3) { transition-delay: 0.9s; }
+        #connected-features.is-visible .feature-lines path:nth-of-type(4) { transition-delay: 0.45s; }
+        #connected-features.is-visible .feature-lines path:nth-of-type(5) { transition-delay: 0.6s; }
+        #connected-features.is-visible .feature-lines path:nth-of-type(6) { transition-delay: 1.05s; }
+        /* --- End Connected Lines --- */
+
+
+        /* --- Original Feature Sections Layout --- */
+        .scroll-section {
+             padding: 60px 0;
+             overflow: hidden;
+             position: relative; /* Ensure sections stay in flow */
+             z-index: 1; /* Keep above particles */
+         }
+        .feature-section-content { display: grid; grid-template-columns: repeat(2, 1fr); gap: 50px; align-items: center; }
+        /* Keep original alternating order for desktop */
+        .scroll-section:nth-child(even) .feature-text { order: 1; }
+        .scroll-section:nth-child(even) .feature-visual { order: 2; }
+        .scroll-section:nth-child(odd) .feature-text { order: 2; }
+        .scroll-section:nth-child(odd) .feature-visual { order: 1; }
+        /* Special case after connected features */
+        #connected-features + .scroll-section .feature-text { order: 1; }
+        #connected-features + .scroll-section .feature-visual { order: 2; }
+
+        .feature-text h2 { font-size: 2.5rem; margin-bottom: 20px; line-height: 1.3; }
+        .feature-text p { color: var(--text-secondary-color); line-height: 1.6; margin-bottom: 25px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pill { background-color: rgba(255, 255, 255, 0.08); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; color: var(--text-secondary-color); cursor: pointer; transition: background-color 0.3s; }
+        .pill.active, .pill:hover { background-color: var(--primary-color); color: white; }
+
+        @media (max-width: 992px) {
+            .feature-section-content { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+            /* Force text first, visual second on mobile for all */
+            .scroll-section .feature-text { order: 1 !important; }
+            .scroll-section .feature-visual { order: 2 !important; }
+            .feature-text h2 { font-size: 2rem; }
+            .pills { justify-content: center; }
+        }
+
+
+        /* --- Scroll Animation Styles (Restored Opacity & Targeting) --- */
+         .line-wrapper { overflow: hidden; display: inline-block; vertical-align: bottom; }
+         .line { display: block; transform: translateY(110%); transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); }
+         .is-visible .line, .scroll-section.is-visible .line, #connected-features.is-visible .line, #hero-section.is-visible .line { transform: translateY(0); }
+
+         .animate-on-scroll {
+             opacity: 0; /* Start hidden */
+             transition: opacity 0.6s ease-out, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+         }
+         .animate-up { transform: translateY(30px); }
+         .animate-left { transform: translateX(-30px); }
+         .animate-right { transform: translateX(30px); }
+
+         /* Apply when section OR element itself gets .is-visible */
+         .scroll-section.is-visible .animate-on-scroll,
+         .animate-on-scroll.is-visible,
+         #connected-features.is-visible .animate-on-scroll,
+         #hero-section.is-visible .animate-on-scroll
+          {
+            opacity: 1;
+            transform: translate(0, 0);
+         }
+        /* --- End Scroll Animation --- */
+
+
+        /* --- START: MOCKUP STYLES (Copied from homepage (11).html) --- */
+        .mockup { /* General mockup container style if needed */
+            background: var(--discord-bg-medium); /* Use Discord color */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+         }
+
+        .music-mockup .now-playing-embed { background-color: #2f3136; border-left: 4px solid var(--primary-color); border-radius: 4px; padding: 10px 15px; margin-bottom: 10px; color: #dcddde; }
+        .music-mockup .now-playing-embed strong { color: #ffffff; display: block; margin-bottom: 5px; }
+        .music-mockup .now-playing-embed a { color: #00A3FF; text-decoration: none; }
+        .music-mockup .now-playing-embed a:hover { text-decoration: underline; }
+        .music-mockup .now-playing-embed small { font-size: 0.8em; color: #b9bbbe; }
+        .music-mockup .buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .music-mockup .btn-mock { padding: 8px 15px; border-radius: 5px; font-weight: 500; color: white; border: none; cursor: pointer; transition: opacity 0.2s ease, transform 0.1s ease; }
+        .music-mockup .btn-mock:hover { opacity: 0.85; transform: translateY(-1px); }
+        .music-mockup .play-btn { background-color: #43b581; }
+        .music-mockup .pause-btn { background-color: #5865F2; }
+        .music-mockup .skip-btn { background-color: #4F545C; }
+        .music-mockup .stop-btn { background-color: #ED4245; }
+
+        .fun-commands-list ul { list-style: none; padding: 0; margin-top: 15px; columns: 2; gap: 10px; }
+        .fun-commands-list li { background-color: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; font-size: 0.95rem; color: var(--text-secondary-color); }
+        .fun-commands-list code { color: var(--primary-color); background-color: rgba(88, 101, 242, 0.1); padding: 2px 4px; border-radius: 3px; font-family: 'SF Mono', monospace; }
+        @media (max-width: 600px) { .fun-commands-list ul { columns: 1; } }
+
+        .discord-mockup { background-color: #36393f; border-radius: 8px; display: flex; height: 450px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #dcddde; border: none; padding: 0; }
+        .server-list { background-color: #202225; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+        .server-icon { width: 48px; height: 48px; border-radius: 50%; background-color: #36393f; background-size: cover; background-position: center; cursor: pointer; transition: border-radius 0.2s ease; }
+        .server-icon:hover { border-radius: 15px; } .server-icon.active { border-radius: 15px; }
+        .dm-icon svg { width: 28px; height: 28px; color: #b9bbbe; } .dm-icon { display: flex; align-items: center; justify-content: center; background-color: #2f3136; }
+        .server-separator { width: 32px; height: 2px; background-color: #2f3136; border-radius: 1px; }
+
+        .main-panel { display: flex; flex-direction: column; flex-grow: 1; background-color: #36393f; }
+        .channel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #202225; flex-shrink: 0; background-color: #36393f; box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 1.5px 0 rgba(0,0,0,0.05), 0 2px 0 rgba(0,0,0,0.05); }
+        .channel-name-wrapper { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; color: #ffffff;} .channel-icon.hash { color: #8e9297; }
+        .channel-header-actions { display: flex; align-items: center; gap: 15px; color: #b9bbbe; }
+        .header-action-button { background: none; border: none; color: inherit; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; } .header-action-button.active svg { color: #ffffff; }
+        .search-bar { background-color: #202225; border-radius: 4px; display: flex; align-items: center; padding: 2px 6px; }
+        .search-bar input { background: none; border: none; color: #dcddde; padding: 4px; font-size: 0.9rem; outline: none; width: 140px;} .search-bar .search-icon { color: #b9bbbe; }
+
+        .chat-panel { flex-grow: 1; overflow-y: auto; padding: 15px 15px 5px 15px; }
+        .chat-message { display: flex; margin-bottom: 15px; }
+        .chat-message .pfp { width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
+        .msg-content { display: flex; flex-direction: column; }
+        .msg-content div:first-child { margin-bottom: 4px; display: flex; align-items: baseline; }
+        .msg-content strong { color: #ffffff; font-weight: 500; margin-right: 8px; }
+        .msg-content small { font-size: 0.75rem; color: #a3a6aa; }
+        .msg-content p { margin: 0; line-height: 1.4; word-wrap: break-word; color: #dcddde; }
+        .bot-embed { background-color: #2f3136; border-left: 4px solid var(--primary-color); border-radius: 4px; padding: 10px 15px; margin-top: 5px; }
+        .bot-embed p { margin: 0 0 8px 0; color: #dcddde; }
+        .bot-embed img { max-width: 100%; max-height: 150px; border-radius: 4px; margin-top: 8px; }
+
+        .message-input-bar { display: flex; align-items: center; padding: 10px 15px; margin: 10px; background-color: #40444b; border-radius: 8px; flex-shrink: 0; }
+        .attach-button { background: none; border: none; color: #b9bbbe; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; margin-right: 8px; border-radius: 50%; }
+        .attach-button:hover { background-color: rgba(255,255,255,0.1); }
+        .message-input { flex-grow: 1; background: none; border: none; color: #dcddde; font-size: 1rem; outline: none; padding: 8px 0;}
+        .message-input::placeholder { color: #72767d; }
+        .input-actions { display: flex; gap: 10px; margin-left: 10px;}
+        .action-button { background: none; border: none; color: #b9bbbe; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 5px; }
+        .gif-button { font-weight: 700; font-size: 0.8rem; background-color: #2f3136; padding: 3px 6px; border-radius: 4px;}
+
+        .member-list { background-color: #2f3136; width: 240px; padding: 15px 10px; overflow-y: auto; flex-shrink: 0; color: #8e9297; }
+        .member-list h4 { margin: 15px 0 8px 8px; font-size: 0.75rem; text-transform: uppercase; font-weight: 600;}
+        .member { display: flex; align-items: center; padding: 6px 8px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; }
+        .member:hover { background-color: rgba(255,255,255,0.04); }
+        .member .pfp-wrapper { position: relative; margin-right: 10px; }
+        .member .pfp { width: 32px; height: 32px; border-radius: 50%; }
+        .member .status { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #2f3136; box-sizing: border-box; }
+        .status.online { background-color: #43b581; } .status.idle { background-color: #faa61a; } .status.dnd { background-color: #f04747; }
+        .member .name { color: #8e9297; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member.admin .name, .member.shammy .name { color: #FFB100; }
+        .member.astra .name { color: #FF4C29; }
+        .member.selics-msg .name { font-weight: bold; color: #00C9A7;}
+        .bot-tag { background-color: #5865F2; color: #ffffff; font-size: 0.65rem; padding: 1px 4px; border-radius: 3px; margin-left: 6px; font-weight: 500; }
+
+        .leaderboard-mockup { padding: 20px; background-color: #2f3136; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .leaderboard-mockup h4 { color: #ffffff; text-align: center; margin-bottom: 15px; }
+        .leaderboard-entry { display: flex; align-items: center; margin-bottom: 10px; padding: 8px; border-radius: 4px; background-color: rgba(0,0,0,0.1); }
+        .leaderboard-entry .rank { font-size: 1.2rem; margin-right: 15px; width: 30px; text-align: center;}
+        .leaderboard-entry .pfp { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
+        .leaderboard-entry .name { color: #dcddde; font-weight: 500; flex-grow: 1;}
+        .leaderboard-entry .score { color: #b9bbbe; font-size: 0.9rem; }
+
+        .dashboard-mockup { text-align: left; background-color: #2f3136; padding: 20px; border-radius: 8px; color: #dcddde; border: 1px solid rgba(255, 255, 255, 0.05);}
+        .dashboard-mockup .header { color: #ffffff; font-weight: 500; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #4f545c;}
+        .dashboard-mockup .setting { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 5px 0; }
+        .dashboard-mockup .setting span:first-child { color: #b9bbbe; }
+        .dashboard-mockup .value-box { background: #36393f; border-radius: 4px; padding: 4px 8px; color: #ffffff; min-width: 80px; text-align: right; }
+        .value-cycler { display: inline-block; position: relative; height: 1.2em; overflow: hidden; }
+        .value-cycler span { display: block; position: absolute; width: 100%; animation: cycle-values 6s infinite ease-in-out; opacity: 0; }
+        .value-cycler span.sassy { animation-delay: 0s; color: #f0c475; }
+        .value-cycler span.demon { animation-delay: 2s; color: #f04747; }
+        .value-cycler span.light { animation-delay: 4s; color: #7289da; }
+        @keyframes cycle-values { 0%, 100% { opacity: 0; transform: translateY(100%); } 10%, 33% { opacity: 1; transform: translateY(0); } 43%, 100% { opacity: 0; transform: translateY(-100%); } }
+
+        .log-mockup .log-embed { background-color: #2f3136; border-left: 4px solid #faa61a; border-radius: 4px; padding: 10px 15px; color: #dcddde; }
+        .log-mockup .log-embed strong { color: #ffffff; display: block; margin-bottom: 8px; font-weight: 500; }
+        .log-mockup .log-embed p { margin: 0; line-height: 1.5; font-size: 0.9em; }
+
+        .giveaway-mockup .giveaway-embed { background: #2f3136; border: 1px solid #4f545c; border-radius: 8px; padding: 20px; text-align: center; color: #fff; }
+        .giveaway-mockup .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+        .giveaway-mockup .prize { font-size: 1.2rem; font-weight: 500; margin-bottom: 15px; }
+        .giveaway-mockup span { font-size: 0.9rem; color: #b9bbbe; display: block; }
+
+        .mockup-pane { display: none; }
+        .mockup-pane.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* --- END: MOCKUP STYLES --- */
+
+
+        /* --- CTA Section Button Adjustment --- */
+        #cta-section .cta-btn {
+            padding: 14px 28px; /* Increased padding */
+            font-size: 1rem; /* Slightly larger text */
+            margin: 0 15px; /* Adjust margin if needed */
+        }
+        @media (max-width: 768px) {
+             #cta-section .cta-btn { padding: 12px 24px; font-size: 0.95rem; }
+        }
+
+        /* --- Original Footer Styles --- */
+         footer {
+             text-align: center; padding: 40px 0; /* Increased padding */
+             margin-top: 50px; /* Increased margin */
+             background-color: rgba(0, 0, 0, 0.2);
+             border-top: 1px solid rgba(255, 255, 255, 0.1);
+             color: var(--text-secondary-color); font-size: 0.95rem; /* Slightly larger text */
+             position: relative; /* Keep in flow */
+             z-index: 1; /* Keep above particles */
+         }
+         /* Add specific styles for links if needed */
+         footer a { color: var(--primary-color); text-decoration: none; margin: 0 10px; }
+         footer a:hover { text-decoration: underline; }
+
+        /* CAPTCHA Styles */
+        #captcha-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 9999; display: flex; justify-content: center; align-items: center; color: #ffffff; font-family: sans-serif; }
+        #captcha-modal { background: #2c2f33; padding: 2rem 3rem; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #captcha-modal h2 { margin-top: 0; margin-bottom: 0.5rem; }
+        #captcha-modal p { margin-top: 0; margin-bottom: 1.5rem; max-width: 320px; line-height: 1.5; color: #dcddde; }
+        #captcha-modal .h-captcha { display: inline-block; }
+
+    </style>
+</head>
+<body>
+    <canvas id="bg-particles"></canvas>
+
+    <audio id="mockup-audio" src="{{ url_for('static', filename='blinding_lights.mp3') }}"></audio>
+
+    {% if not session.get('is_human') %}
+    <div id="captcha-overlay">
+         <div id="captcha-modal">
+            <h2>Please Verify You Are Human</h2>
+            <p>This one-time check helps us prevent bots and ensure a fair experience for everyone.</p>
+            <div class="h-captcha"
+                 data-sitekey="5b628e14-89f8-47cc-a510-dada58cc7178" data-callback="onCaptchaSuccess">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <header>
+        <div class="bot-info">
+            <img src="{{ bot_info.avatar_url }}" alt="Bot Logo">
+            <h1>{{ bot_info.name }}</h1>
+        </div>
+        <nav>
+            {% if user %}
+            <div class="user-info">
+                <span>{{ user.name }}</span>
+                <img src="{{ user.avatar_url }}" alt="User PFP">
+            </div>
+            <a href="/dashboard-auth" class="cta-btn primary">Dashboard</a>
+            <a href="/logout" class="cta-btn secondary">Logout</a>
+            {% else %}
+            <a href="/login" class="cta-btn secondary">Login</a>
+             <a href="{{ bot_invite_url }}" class="cta-btn primary">Add Bot</a> <a href="/dashboard-auth" class="cta-btn secondary">Dashboard</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <div class="scroll-container">
+
+        <section id="hero-section" class="scroll-section"> <div class="ripple-container">
+                 <div class="ripple-circle"></div>
+                 <div class="ripple-circle"></div>
+                 <div class="ripple-circle"></div>
+             </div>
+             <div class="container hero-content">
+                <h1 class="hero-title animate-on-scroll animate-up">
+                    <span class="line-wrapper"><span class="line">Your All-In-One</span></span><br>
+                    <span class="line-wrapper"><span class="line">Server Solution</span></span>
+                </h1>
+                <p class="hero-subtitle animate-on-scroll animate-up" style="transition-delay: 0.3s;">An advanced, customizable utility bot packed with features, games, and a powerful web dashboard to secure and engage your community.</p>
+                <div class="cta-buttons animate-on-scroll animate-up" style="transition-delay: 0.4s;">
+                    <a href="{{ bot_invite_url }}" class="cta-btn primary">Add to Discord</a>
+                    <a href="/dashboard-auth" class="cta-btn secondary">Open Dashboard</a>
+                </div>
+            </div>
+            <div class="hero-bg-shape one"></div>
+            <div class="hero-bg-shape two"></div>
+        </section>
+
+        <section id="connected-features" class="connected-features scroll-section"> <div class="section-header" style="position: absolute; top: 30px; left: 50%; transform: translateX(-50%); z-index: 3;">
+                 <h2 class="section-header-title font-aeonik font-aeonik-h3 animate-on-scroll animate-up"> <span>Core Features Connected</span>
+                 </h2>
+             </div>
+            <div class="connected-features-container">
+                <div class="feature-lines">
+                    <svg viewBox="0 0 650 450"> <path d="M 325 225 C 225 225, 150 120, 97.5 67.5"></path>
+                         <path d="M 325 225 C 425 225, 500 120, 552.5 67.5"></path>
+                        <path d="M 325 225 C 175 225, 75 225, 32.5 225"></path>
+                        <path d="M 325 225 C 475 225, 575 225, 617.5 225"></path>
+                         <path d="M 325 225 C 225 225, 150 330, 97.5 382.5"></path>
+                         <path d="M 325 225 C 425 225, 500 330, 552.5 382.5"></path>
+                    </svg>
+                </div>
+                 <div class="feature-node central">
+                    <div class="node-circle">{{ bot_info.name[:2] | upper }}</div>
+                    <div class="node-label">{{ bot_info.name }}</div>
+                </div>
+                <div class="outer-nodes">
+                     <div class="feature-node"> <div class="node-circle">🖥️</div> <div class="node-label">Web Dashboard</div> </div>
+                     <div class="feature-node"> <div class="node-circle">🎵</div> <div class="node-label">High-Quality Music</div> </div>
+                     <div class="feature-node"> <div class="node-circle">🗣️</div> <div class="node-label">Natural Voice TTS</div> </div>
+                     <div class="feature-node"> <div class="node-circle">📊</div> <div class="node-label">Advanced Logging</div> </div>
+                     <div class="feature-node"> <div class="node-circle">🎉</div> <div class="node-label">Dynamic Giveaways</div> </div>
+                     <div class="feature-node"> <div class="node-circle">🎲</div> <div class="node-label">Fun & Utilities</div> </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="ai-personality-section" class="scroll-section">
+             <div class="container feature-section-content">
+                <div class="feature-text animate-on-scroll animate-left">
+                    <h2><span class="line-wrapper"><span class="line">Dynamic AI</span></span><br><span class="line-wrapper"><span class="line">Personalities</span></span></h2>
+                    <p>Switch the bot's core personality on the fly. From helpful and sassy to the unfiltered Demonmode, wholesome Lightmode, scholarly Professor, and many more for unique chat experiences.</p>
+                    <div class="pills">
+                        <div class="pill animate-on-scroll animate-up" data-target="demon-pane">😈 Demonmode</div>
+                        <div class="pill animate-on-scroll animate-up active" data-target="sassy-pane">😏 Sassy Default</div>
+                        <div class="pill animate-on-scroll animate-up" data-target="light-pane">💖 Lightmode</div>
+                    </div>
+                </div>
+                <div class="feature-visual animate-on-scroll animate-right">
+                    <div class="mockup chat-mockup">
+                        <div id="sassy-pane" class="mockup-pane active">
+                            <div class="chat-message user-msg"><img class="pfp" src="{{ url_for('static', filename='shammy4902-pfp.png') }}" alt="Shammy PFP"><div class="msg-content"><div><strong style="color: #FFB100;">Shammy4902</strong> <small>Today at 9:15 PM</small></div><p>hey what's up</p></div></div>
+                            <div class="chat-message bot-msg"><img class="pfp" src="{{ bot_info.avatar_url }}" alt="Bot PFP"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong> <small>Today at 9:15 PM</small></div><p>The sky, probably. Need something?</p></div></div>
+                        </div>
+                        <div id="demon-pane" class="mockup-pane">
+                            <div class="chat-message user-msg"><img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}" alt="ASTRA PFP"><div class="msg-content"><div><strong style="color: #FF4C29;">ASTRA</strong> <small>Today at 9:20 PM</small></div><p>bot are you online?</p></div></div>
+                            <div class="chat-message bot-msg demon-msg"><img class="pfp" src="{{ bot_info.avatar_url }}" alt="Bot PFP"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong> <small>Today at 9:20 PM</small></div><p>Can't you see the green circle? Don't ping me again.</p></div></div>
+                        </div>
+                        <div id="light-pane" class="mockup-pane">
+                           <div class="chat-message user-msg"><img class="pfp" src="{{ url_for('static', filename='selics.gif') }}" alt="SELICS PFP"><div class="msg-content"><div><strong style="color: #00C9A7;">SELICS</strong> <small>Today at 9:25 PM</small></div><p>how are you today?</p></div></div>
+                            <div class="chat-message bot-msg light-msg"><img class="pfp" src="{{ bot_info.avatar_url }}" alt="Bot PFP"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong> <small>Today at 9:25 PM</small></div><p>Wonderfully bright! Hope your day shines too! ✨</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="games-section" class="scroll-section">
+             <div class="container">
+                <div class="feature-text animate-on-scroll animate-up">
+                    <h2><span class="line-wrapper"><span class="line">Engaging Minigames</span></span></h2>
+                    <p>A full suite of interactive games to keep your community active and competing for the top spots on the leaderboard.</p>
+                     <div class="pills">
+                        <div class="pill animate-on-scroll animate-up active" data-target="flag-mockup">🚩 Guess the Flag</div>
+                        <div class="pill animate-on-scroll animate-up" data-target="trivia-mockup">🎲 Trivia System</div>
+                        <div class="pill animate-on-scroll animate-up" data-target="leaderboard-mockup">🏆 Leaderboards</div>
+                    </div>
+                </div>
+                 <div class="feature-visual animate-on-scroll animate-up" style="margin-top: 40px; transition-delay: 0.2s;">
+                    <div class="discord-mockup">
+                        <div class="server-list">
+                            <div class="server-icon dm-icon"><svg width="28" height="21" viewBox="0 0 71 55"><path fill="currentColor" d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5623 0.39851 45.471 0.44076 45.4204 0.52528C44.7963 1.6353 44.1053 3.2132 43.6201 4.2238C38.1637 3.4046 32.7345 3.4046 27.3898 4.2238C26.9046 3.2132 26.2136 1.6353 25.5895 0.52528C25.5389 0.44076 25.4485 0.39851 25.3581 0.41542C20.2843 1.2916 15.4316 2.8214 10.9063 4.8978C10.8384 4.9272 10.7878 4.9861 10.7673 5.0606C1.57798 18.7334 -0.173161 32.1442 0.015332 45.3213C0.0242253 45.5847 0.212718 45.7979 0.477641 45.8337C7.92541 50.4131 15.2043 53.3853 22.3732 54.8524C22.6158 54.9033 22.8673 54.787 22.9843 54.5682C23.6307 53.2801 24.1428 51.9056 24.5644 50.474C24.621 50.244 24.4952 50.014 24.2638 49.9387C22.1023 49.1998 20.0178 48.3347 18.0095 47.338C17.8102 47.2302 17.653 46.9842 17.6741 46.7441C17.7635 45.7115 17.9392 44.6875 18.1818 43.6804C18.2101 43.5592 18.3155 43.4633 18.435 43.4408C29.1132 40.1913 39.0645 40.1913 49.5776 43.4408C49.6971 43.4633 49.8025 43.5592 49.8308 43.6804C50.0734 44.6875 50.2491 45.7115 50.3385 46.7441C50.3596 46.9842 50.2024 47.2302 50.0031 47.338C48.0037 48.3347 45.9103 49.1998 43.7488 49.9387C43.5183 50.014 43.3925 50.244 43.4491 50.474C43.8707 51.9056 44.3828 53.2801 45.0292 54.5682C45.1462 54.787 45.3977 54.9033 45.6403 54.8524C52.8092 53.3853 60.0881 50.4131 67.5359 45.8337C67.8008 45.7979 67.9893 45.5847 67.9982 45.3213C68.2169 30.0763 65.6559 16.2439 60.2696 5.0606C60.2491 4.9861 60.1985 4.9272 60.1306 4.8978H60.1045ZM22.6963 37.1223C19.7211 37.1223 17.3193 34.1136 17.3193 30.485C17.3193 26.8564 19.7122 23.8477 22.6963 23.8477C25.6804 23.8477 28.0152 26.8564 27.9898 30.485C27.9898 34.1136 25.6715 37.1223 22.6963 37.1223ZM45.3184 37.1223C42.3432 37.1223 39.9414 34.1136 39.9414 30.485C39.9414 26.8564 42.3343 23.8477 45.3184 23.8477C48.3025 23.8477 50.6373 26.8564 50.6119 30.485C50.6119 34.1136 48.3025 37.1223 45.3184 37.1223Z"></path></svg></div>
+                            <div class="server-separator"></div>
+                            <div class="server-icon" style="background-image: url('{{ url_for('static', filename='server1.jpg') }}');"></div>
+                            <div class="server-icon active" style="background-image: url('{{ bot_info.avatar_url }}');"></div>
+                            <div class="server-icon" style="background-image: url('{{ url_for('static', filename='server2.jpg') }}');"></div>
+                        </div>
+                        <div class="main-panel">
+                             <div class="channel-header">
+                                <div class="channel-name-wrapper"><svg class="channel-icon hash" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M5.88657 21C5.57547 21 5.3399 20.7189 5.39427 20.4126L6.00001 17H2.59511C2.28449 17 2.04905 16.7198 2.10259 16.4138L3.27001 10.4138C3.32356 10.1078 3.59733 9.89437 3.90818 9.89437H7.31134L7.98528 6.20437C8.03852 5.89791 8.31283 5.68359 8.62335 5.68359H11.5147C11.8252 5.68359 12.0607 5.96374 12.0071 6.2697L11.3714 10H14.7153C15.0258 10 15.2613 10.2802 15.2078 10.5862L14.0403 16.5862C13.9868 16.8922 13.713 17.1056 13.4022 17.1056H10.0001L9.32617 20.7956C9.27292 21.1021 8.99861 21.3164 8.68809 21.3164H5.88657V21ZM6.81581 16H9.41071L10.0846 12.31H7.48835L6.81581 16ZM9.91531 11H12.5117L13.1842 7H10.5893L9.91531 11Z"></path></svg> <span>minigames</span></div>
+                                <div class="channel-header-actions">
+                                    <button class="header-action-button" aria-label="Threads"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2l4-2h9c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 12H8v-2h4v2zm4-3H8v-2h8v2zm0-3H8V7h8v2z"></path></svg></button>
+                                    <button class="header-action-button" aria-label="Notifications"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20h4c0 1.1-.9 2-2 2s-2-.9-2-2zm10-3.33V11c0-3.47-2.11-6.4-5.14-7.23A2.01 2.01 0 0 0 12.5 2a2.5 2.5 0 0 0-5 0A2.01 2.01 0 0 0 5.14 3.77C2.11 4.6 0 7.53 0 11v5.67l2 1.33V19h16v-1l2-1.33z"></path></svg></button>
+                                    <button class="header-action-button" aria-label="Pinned Messages"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l1.8-2.4 1.8 2.4v-6H20v-2l-2-2z"></path></svg></button>
+                                    <button class="header-action-button active" aria-label="Show Member List"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16 13c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9.5 6c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V20h-10v-1.5zM8 13c2.21 0 4-1.79 4-4s-1.79-4-4-4S4 6.79 4 9s1.79 4 4 4zm-1.5 6c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V20h-10v-1.5z"></path></svg></button>
+                                    <div class="search-bar"><input type="text" placeholder="Search"><svg class="search-icon" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.707 20.293l-5.365-5.365A8.942 8.942 0 0 0 18 9c0-4.962-4.037-9-9-9s-9 4.038-9 9 4.037 9 9 9c2.44 0 4.685-.975 6.337-2.578l5.356 5.356c.39.39 1.024.39 1.414 0 .39-.39.39-1.023 0-1.414zM4 9c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7-7-3.14-7-7z"></path></svg></div>
+                                    <button class="header-action-button" aria-label="Help"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"></path></svg></button>
+                                </div>
+                             </div>
+                            <div class="chat-panel">
+                                <div id="flag-mockup" class="mockup-pane active">
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:45 PM</small></div><div class="bot-embed"><p>Guess the Flag! Round 1/5</p><img src="https://flagcdn.com/w320/fr.png"></div></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}"><div class="msg-content"><div><strong style="color: #FF4C29;">ASTRA</strong><small> Today at 2:45 PM</small></div><p>italy?</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='selics.gif') }}"><div class="msg-content"><div><strong style="color: #00C9A7;">SELICS</strong><small> Today at 2:45 PM</small></div><p>France</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:45 PM</small></div><p>🎉 Correct! SELICS gets a point!</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:46 PM</small></div><div class="bot-embed"><p>Guess the Flag! Round 2/5</p><img src="https://flagcdn.com/w320/jp.png"></div></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='shammy4902-pfp.png') }}"><div class="msg-content"><div><strong style="color: #FFB100;">Shammy4902</strong><small> Today at 2:46 PM</small></div><p>Japan ez</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:46 PM</small></div><p>🎉 Correct! Shammy4902 gets a point!</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:47 PM</small></div><div class="bot-embed"><p>Guess the Flag! Round 3/5</p><img src="https://flagcdn.com/w320/br.png"></div></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}"><div class="msg-content"><div><strong style="color: #FF4C29;">ASTRA</strong><small> Today at 2:47 PM</small></div><p>portugal</p></div></div>
+                                     <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='DICE-PFP.jpg') }}"><div class="msg-content"><div><strong>DICE</strong><small> Today at 2:47 PM</small></div><p>Brazil</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 2:47 PM</small></div><p>🎉 Correct! DICE gets a point!</p></div></div>
+                                </div>
+                                <div id="trivia-mockup" class="mockup-pane">
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 10:40 PM</small></div><div class="bot-embed"><p>🧠 Trivia Time!</p><p style="margin-top: 8px;">What is the largest mammal in the world?</p></div></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='DICE-PFP.jpg') }}"><div class="msg-content"><div><strong>DICE</strong><small> Today at 10:40 PM</small></div><p>Is it an Elephant?</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='Deku.jpg') }}"><div class="msg-content"><div><strong>Deku</strong><small> Today at 10:40 PM</small></div><p>isnt it a sperm whale?</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='soulnikto-pfp.png') }}"><div class="msg-content"><div><strong>SOULNIKTO</strong><small> Today at 10:41 PM</small></div><p>lmao you guys are trolling</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ url_for('static', filename='Ase.jpg') }}"><div class="msg-content"><div><strong>Ase</strong><small> Today at 10:41 PM</small></div><p>Pretty sure it's the Blue Whale.</p></div></div>
+                                    <div class="chat-message"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="msg-content"><div><strong>{{ bot_info.name }}</strong><small> Today at 10:41 PM</small></div><p>🏆 Ase is correct! The answer was Blue Whale.</p></div></div>
+                                </div>
+                                <div id="leaderboard-mockup" class="mockup-pane">
+                                     <div class="mockup leaderboard-mockup">
+                                        <h4>🏆 Top Players</h4>
+                                        <div class="leaderboard-entry"><span class="rank">🥇</span><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='selics.gif') }}"></div> <span class="name">SELICS</span> <span class="score">1,241 pts</span></div>
+                                        <div class="leaderboard-entry"><span class="rank">🥈</span><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}"></div> <span class="name">ASTRA</span> <span class="score">980 pts</span></div>
+                                        <div class="leaderboard-entry"><span class="rank">🥉</span><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='shammy4902-pfp.png') }}"></div> <span class="name">Shammy4902</span> <span class="score">850 pts</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="message-input-bar">
+                                <button class="attach-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7v-2h4V7h2v4h4v2h-4v4h-2z"></path></svg></button>
+                                <input type="text" placeholder="Message #minigames" class="message-input">
+                                <div class="input-actions"> <button class="action-button gif-button">GIF</button> <button class="action-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.828 0 1.5.672 1.5 1.5S16.328 14 15.5 14s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5zm-7 0c.828 0 1.5.672 1.5 1.5S9.328 14 8.5 14s-1.5-.672-1.5-1.5.672-1.5 1.5-1.5zM12 15c-2.33 0-4.32 1.45-5.12 3.5h10.24c-.8-2.05-2.79-3.5-5.12-3.5z"></path></svg></button> <button class="action-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M15 7.5V2H9v5.5l3 3 3-3zM7.5 9H2v6h5.5l3-3-3-3zM9 16.5V22h6v-5.5l-3-3-3 3zM16.5 9l-3 3 3 3H22V9h-5.5z"></path></svg></button> </div>
+                            </div>
+                        </div>
+                        <div class="member-list">
+                            <h4>Admin - 1</h4> <div class="member admin"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='selics.gif') }}"><div class="status online"></div></div><span class="name">SELICS</span></div>
+                            <h4>Bot - 1</h4> <div class="member bot"><div class="pfp-wrapper"><img class="pfp" src="{{ bot_info.avatar_url }}"><div class="status online"></div></div><span class="name">{{ bot_info.name }}</span><span class="bot-tag">BOT</span></div>
+                            <h4>Members - 8</h4>
+                            <div class="member shammy"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='shammy4902-pfp.png') }}"><div class="status online"></div></div><span class="name">Shammy4902</span></div>
+                            <div class="member astra"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}"><div class="status idle"></div></div><span class="name">ASTRA</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='soulnikto-pfp.png') }}"><div class="status dnd"></div></div><span class="name">SOULNIKTO</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='Ase.jpg') }}"><div class="status online"></div></div><span class="name">Ase</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='Deku.jpg') }}"><div class="status online"></div></div><span class="name">Deku</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='DICE-PFP.jpg') }}"><div class="status idle"></div></div><span class="name">DICE</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='shado.png') }}"><div class="status dnd"></div></div><span class="name">Shado</span></div>
+                            <div class="member"><div class="pfp-wrapper"><img class="pfp" src="{{ url_for('static', filename='glebisbusy.jpg') }}"><div class="status online"></div></div><span class="name">glebisbusy</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard-section" class="scroll-section">
+            <div class="container feature-section-content">
+                <div class="feature-text animate-on-scroll animate-left">
+                    <h2><span class="line-wrapper"><span class="line">Powerful Web</span></span><br><span class="line-wrapper"><span class="line">Dashboard</span></span></h2>
+                    <p>Manage every aspect of your server...</p>
+                    <div class="pills"> <div class="pill animate-on-scroll animate-up">Role Permissions</div> <div class="pill animate-on-scroll animate-up">Channel Settings</div> <div class="pill animate-on-scroll animate-up">Live Analytics</div> </div>
+                </div>
+                <div class="feature-visual animate-on-scroll animate-right">
+                    <div class="mockup dashboard-mockup">
+                        <div class="header">Server Settings</div>
+                        <div class="setting"><span>Log Channel</span> <div class="value-box">#mod-logs</div></div>
+                        <div class="setting"><span>AI Personality</span> <div class="value-box"><div class="value-cycler"><span class="sassy">Sassy</span><span class="demon">Demonmode</span><span class="light">Lightmode</span></div></div></div>
+                        <div class="setting"><span>Flag Game Difficulty</span> <div class="value-box">Hard</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="music-section" class="scroll-section">
+            <div class="container feature-section-content">
+                 <div class="feature-visual animate-on-scroll animate-left">
+                    <div class="mockup music-mockup">
+                        <div class="now-playing-embed">
+                             <strong>Now Playing</strong>
+                             <a href="#">The Weeknd - Blinding Lights (Official Audio)</a>
+                             <small>Requested by Shammy4902 | [Spotify]</small>
+                        </div>
+                         <div class="buttons">
+                            <button class="btn-mock play-btn" onclick="playAudio()">▶️ Play</button>
+                            <button class="btn-mock pause-btn" onclick="pauseAudio()">⏸️ Pause</button>
+                            <button class="btn-mock skip-btn" onclick="stopAudio()">⏭️ Skip</button>
+                            <button class="btn-mock stop-btn" onclick="stopAudio()">⏹️ Stop</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-text animate-on-scroll animate-right">
+                    <h2><span class="line-wrapper"><span class="line">High-Quality</span></span><br><span class="line-wrapper"><span class="line">Music Player</span></span></h2>
+                    <p>Play music directly from YouTube or Spotify...</p>
+                     <div class="pills"> <div class="pill animate-on-scroll animate-up">Spotify & YouTube</div> <div class="pill animate-on-scroll animate-up">Lazy Playlist Loading</div> <div class="pill animate-on-scroll animate-up">Control Buttons</div> <div class="pill animate-on-scroll animate-up">Auto Leave</div> </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tts-section" class="scroll-section">
+            <div class="container feature-section-content">
+                <div class="feature-text animate-on-scroll animate-left">
+                    <h2><span class="line-wrapper"><span class="line">Natural Voice</span></span><br><span class="line-wrapper"><span class="line">Text-to-Speech</span></span></h2>
+                    <p>Bring voice channels to life! ...</p>
+                     <div class="pills"> <div class="pill animate-on-scroll animate-up">Multiple Voices</div> <div class="pill animate-on-scroll animate-up">User Selectable</div> <div class="pill animate-on-scroll animate-up">Channel Bound</div> <div class="pill animate-on-scroll animate-up">Volume Control</div> </div>
+                </div>
+                 <div class="feature-visual animate-on-scroll animate-right">
+                    <div class="mockup chat-mockup">
+                        <div class="chat-message user-msg"> <img class="pfp" src="{{ url_for('static', filename='shammy4902-pfp.png') }}"> <div class="msg-content"><div><strong>Shammy4902</strong> <small>...</small></div><p>Can you read this out loud?</p></div> </div>
+                        <div class="chat-message bot-msg"> <img class="pfp" src="{{ bot_info.avatar_url }}"> <div class="msg-content"><div><strong>{{ bot_info.name }}</strong> <small>...</small></div><p><i>(Speaking with Aria's voice):</i> Can you read this out loud?</p></div> </div>
+                        <div class="chat-message user-msg"> <img class="pfp" src="{{ url_for('static', filename='astra-pfp.jpg') }}"> <div class="msg-content"><div><strong>ASTRA</strong> <small>...</small></div><p>And this one too?</p></div> </div>
+                         <div class="chat-message bot-msg"> <img class="pfp" src="{{ bot_info.avatar_url }}"> <div class="msg-content"><div><strong>{{ bot_info.name }}</strong> <small>...</small></div><p><i>(Speaking with Guy's voice):</i> And this one too?</p></div> </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="logging-section" class="scroll-section">
+            <div class="container feature-section-content">
+                <div class="feature-text animate-on-scroll animate-left">
+                    <h2><span class="line-wrapper"><span class="line">Advanced</span></span><br><span class="line-wrapper"><span class="line">Logging</span></span></h2>
+                    <p>Keep a close eye on server activity...</p>
+                     <div class="pills"> <div class="pill animate-on-scroll animate-up">Ghost Ping Detection</div> <div class="pill animate-on-scroll animate-up">New User Alerts</div> <div class="pill animate-on-scroll animate-up">Moderation Log</div> </div>
+                </div>
+                 <div class="feature-visual animate-on-scroll animate-right">
+                    <div class="mockup log-mockup"> <div class="log-embed"> <strong>👻 Ghost Ping Detected</strong> <p><strong>Author:</strong> Shammy4902<br><strong>Channel:</strong> #general</p> </div> </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="giveaways-section" class="scroll-section">
+            <div class="container feature-section-content">
+                 <div class="feature-visual animate-on-scroll animate-left">
+                    <div class="mockup giveaway-mockup"> <div class="giveaway-embed"> <div class="emoji">🎉</div> <div class="prize">Win a Custom Role!</div> <span>React with 🎉 to enter! Ends in: 23 hours</span> </div> </div>
+                </div>
+                <div class="feature-text animate-on-scroll animate-right">
+                    <h2><span class="line-wrapper"><span class="line">Dynamic</span></span><br><span class="line-wrapper"><span class="line">Giveaways</span></span></h2>
+                    <p>Easily run exciting giveaways...</p>
+                     <div class="pills"> <div class="pill animate-on-scroll animate-up">Multiple Winners</div> <div class="pill animate-on-scroll animate-up">Custom Durations</div> <div class="pill animate-on-scroll animate-up">Streak-Based Entries</div> </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fun-commands-section" class="scroll-section">
+            <div class="container feature-section-content">
+                <div class="feature-text animate-on-scroll animate-left">
+                    <h2><span class="line-wrapper"><span class="line">More Fun &</span></span><br><span class="line-wrapper"><span class="line">Utilities</span></span></h2>
+                    <p>Beyond the core features, enjoy a range of commands...</p>
+                     <div class="pills"> <div class="pill animate-on-scroll animate-up">Birthdays</div> <div class="pill animate-on-scroll animate-up">Roasts & Debate</div> <div class="pill animate-on-scroll animate-up">Profiles & Stats</div> </div>
+                </div>
+                 <div class="feature-visual animate-on-scroll animate-right fun-commands-list">
+                    <ul>
+                        <li><code>/birthday set</code> - Set your birthday</li> <li><code>/roast</code> - Roast a user</li>
+                        <li><code>/darkroast</code> - Multi-roast</li> <li><code>/debate</code> - Get a debate topic</li>
+                        <li><code>/profile</code> - View user stats</li> <li><code>/height</code> - Check user's height</li>
+                        <li><code>/serverlore</code> - Random server history</li> <li><code>/trivia</code> - Start trivia game</li>
+                        <li><code>/todchannel</code> - Setup Truth or Dare</li> <li>And more...</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="cta-section" class="scroll-section">
+            <div class="container">
+                <h2 class="animate-on-scroll animate-up"><span class="line-wrapper"><span class="line">Ready to Upgrade Your Server?</span></span></h2>
+                <div class="cta-buttons animate-on-scroll animate-up" style="transition-delay: 0.3s;">
+                    <a href="{{ bot_invite_url }}" class="cta-btn primary">Add to Discord</a>
+                    <a href="/dashboard-auth" class="cta-btn secondary">Open Dashboard</a>
+                </div>
+            </div>
+        </section>
+
+    </div> <footer>
+        © {{ bot_info.name }} - All rights reserved.
+        <a href="/tos" style="margin-left: 15px;">Terms of Service</a> | <a href="/privacy">Privacy Policy</a>
+    </footer>
+
+    <script>
+        // --- CAPTCHA Logic ---
+        function onCaptchaSuccess(token) {
+            fetch('/verify-captcha', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ token: token }), 
+            })
+            .then(response => response.json())
+            .then(data => { 
+                if (data.success) { 
+                    window.location.reload(); 
+                } else { 
+                    alert("CAPTCHA failed."); 
+                } 
+            })
+            .catch(error => { console.error('Error:', error); alert("CAPTCHA error."); });
+        }
+
+        // --- Core Interactions ---
+        function startInteractions() {
+            // -- Intersection Observer --
+            const observerOptions = { 
+                root: null, 
+                rootMargin: '0px', 
+                threshold: 0.5 /* <-- CHANGED to 0.5 for a more natural trigger */
+            };
+            
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) { 
+                        entry.target.classList.add('is-visible'); 
+                    }
+                    else if (!entry.target.matches('#hero-section')) { // Only keep hero visible
+                        // Allow other sections to reset animation if they scroll out
+                         entry.target.classList.remove('is-visible'); 
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all sections and elements needing triggers
+            document.querySelectorAll('.scroll-section, #connected-features, .animate-on-scroll').forEach(el => observer.observe(el));
+
+            // -- Pill Toggle Logic --
+            function setupPillToggle(sectionId, pillSelector, paneSelector) { 
+                const section = document.getElementById(sectionId); if (!section) return; 
+                const pills = section.querySelectorAll(pillSelector); const panes = section.querySelectorAll(paneSelector); 
+                // Ensure default active pane is shown even without pills
+                if (panes.length > 0) {
+                     let hasActive = Array.from(panes).some(p => p.classList.contains('active'));
+                     if (!hasActive && panes[0]) panes[0].classList.add('active'); // Activate first pane if none are active
+                 }
+                if (!pills.length || !panes.length) return; // Exit if no pills or no panes
+
+                pills.forEach(pill => { 
+                    pill.addEventListener('click', () => { 
+                        pills.forEach(p => p.classList.remove('active')); 
+                        panes.forEach(p => p.classList.remove('active')); 
+                        pill.classList.add('active'); 
+                        const targetId = pill.dataset.target; 
+                        const targetPane = section.querySelector(`#${targetId}`); 
+                        if (targetPane) targetPane.classList.add('active'); 
+                    }); 
+                }); 
+                // Set initial state based on HTML or default to first
+                const activePill = section.querySelector(`${pillSelector}.active`); 
+                if (activePill) { 
+                    const targetId = activePill.dataset.target; const targetPane = section.querySelector(`#${targetId}`); 
+                    if (targetPane) { 
+                        panes.forEach(p => { if (p.id !== targetId) p.classList.remove('active'); }); 
+                        targetPane.classList.add('active'); 
+                    } 
+                } else if(pills.length > 0 && panes[0]) { 
+                     pills[0].classList.add('active'); // Activate first pill visually
+                     panes[0].classList.add('active'); // Activate first pane
+                } 
+            }
+             // Call setup after DOM ready ensures elements exist
+            setupPillToggle('ai-personality-section', '.pill', '.mockup-pane');
+            setupPillToggle('games-section', '.pill', '.mockup-pane');
+        }
+
+
+        // --- Floating Particles Background ---
+        const particlesCanvas = document.getElementById('bg-particles');
+        if (particlesCanvas) {
+            const ctx = particlesCanvas.getContext('2d'); let particles = []; 
+            const particleCount = 60; const particleColor = 'rgba(170, 150, 255, 0.35)'; 
+            class Particle { 
+                constructor() { 
+                    this.x = Math.random() * particlesCanvas.width; 
+                    this.y = Math.random() * particlesCanvas.height; 
+                    this.size = Math.random() * 1.5 + 0.5; 
+                    this.speedY = Math.random() * -0.3 - 0.1; 
+                    this.speedX = (Math.random() - 0.5) * 0.2; 
+                } 
+                draw() { 
+                    ctx.fillStyle = particleColor; 
+                    ctx.beginPath(); 
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); 
+                    ctx.fill(); 
+                } 
+                update() { 
+                    this.y += this.speedY; 
+                    this.x += this.speedX; 
+                    if (this.y < -this.size) { this.y = particlesCanvas.height + this.size; this.x = Math.random() * particlesCanvas.width; } 
+                    if (this.x < -this.size) { this.x = particlesCanvas.width + this.size; } else if (this.x > particlesCanvas.width + this.size) { this.x = -this.size; } 
+                } 
+            } 
+            function initParticles() { 
+                particlesCanvas.width = window.innerWidth; 
+                particlesCanvas.height = window.innerHeight; 
+                particles = []; 
+                for (let i = 0; i < particleCount; i++) { particles.push(new Particle()); } 
+            } 
+            function animateParticles() { 
+                ctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height); 
+                for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } 
+                requestAnimationFrame(animateParticles); 
+            } 
+            initParticles(); 
+            animateParticles(); 
+            window.addEventListener('resize', initParticles);
+        }
+         // --- End Floating Particles ---
+
+        // --- Music Player Controls ---
+        const mockupAudio = document.getElementById('mockup-audio');
+        function playAudio() { if (mockupAudio) mockupAudio.play(); console.log("Play attempted");}
+        function pauseAudio() { if (mockupAudio) mockupAudio.pause(); console.log("Pause attempted");}
+        function stopAudio() { if (mockupAudio) { mockupAudio.pause(); mockupAudio.currentTime = 0; } console.log("Stop attempted");}
+
+        // --- Initialization and Secret Knock ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!document.getElementById('captcha-overlay')) { 
+                startInteractions(); 
+            }
+            const logo = document.querySelector('.bot-info h1'); // Target H1
+            if (logo) { 
+                 let clickCount = 0; let lastClickTime = 0; 
+                 logo.addEventListener('click', (e) => { 
+                     const now = new Date().getTime(); 
+                     if (now - lastClickTime > 5000) { clickCount = 0; } 
+                     clickCount++; 
+                     lastClickTime = now; 
+                     console.log("Logo clicks:", clickCount); 
+                     if (clickCount >= 7) { window.location.href = '/owner'; clickCount = 0; } 
+                 }); 
+             }
+             // Ensure initial pill states are correct after DOM load
+             setupPillToggle('ai-personality-section', '.pill', '.mockup-pane');
+             setupPillToggle('games-section', '.pill', '.mockup-pane');
+        });
+    </script>
+</body>
+</html>

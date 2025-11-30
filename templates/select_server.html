@@ -1,0 +1,580 @@
+{% extends "layout.html" %}
+
+{% block title %}Select a Server{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Base Styles (from homepage) --- */
+    @keyframes hue-rotate {
+        0% { filter: hue-rotate(0deg); }
+        to { filter: hue-rotate(360deg); }
+    }
+
+    :root {
+        --primary-color: #5865F2; /* Discord blurple */
+        --text-primary-color: #ffffff;
+        --text-secondary-color: #b9bbbe; /* Discord grey */
+        --bg-primary-color: #030014; /* Reflect Dark BG */
+        --bg-secondary-color: #2c2f33;
+        --bg-tertiary-color: #202225;
+        --accent-color-purple: #9382ff; /* Reflect Purple Accent */
+    }
+
+    /* Reset body styles from layout.html if necessary */
+    body {
+        /* This ensures the solid dark background is used */
+        background-color: var(--bg-primary-color) !important; 
+        color: var(--text-primary-color);
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        margin: 0;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* --- FIX: Hide particle background from layout.html --- */
+    #bg-particles {
+        display: none !important; /* Hide the canvas */
+        visibility: hidden;
+    }
+    /* --- End Fix --- */
+
+
+    /* General Resets & Helpers */
+    h1, h2, h3, h4, h5, h6, p { margin: 0; }
+    ul { list-style: none; margin-block-end: 0; margin-block-start: 0; padding: 0; }
+    svg { display: block; max-width: 100%; height: auto; }
+    img { border: 0; display: block; object-fit: cover; max-width: 100%; height: auto;}
+    a { color: inherit; text-decoration: none; }
+    button { appearance: none; background-color: transparent; border: 0; cursor: pointer; text-transform: none; font-family: inherit; font-size: 100%; line-height: normal; margin: 0; vertical-align: baseline; }
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    *:focus { outline: none; }
+
+    /* Selection Styles */
+    ::selection { background: rgba(147, 130, 255, .5); color: #fff; }
+    ::-moz-selection { background: rgba(147, 130, 255, .5); color: #fff; }
+
+    /* Scrollbar Styles */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: inherit; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .05); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .1); }
+
+    /* Container Styles */
+    .container-lg, .container, .container-md, .container-sm { margin: 0 auto; }
+    .container-lg { max-width: 1296px; padding: 0 15px; }
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+    .container-md { max-width: 1200px; padding: 0 15px; }
+    .container-sm { max-width: 1128px; padding: 0 15px; }
+
+    @media (max-width: 1200px) { .container { max-width: 960px; } }
+    @media (max-width: 992px) { .container { max-width: 720px; } }
+    @media (max-width: 768px) { .container { max-width: 540px; } }
+    @media (max-width: 576px) { .container { max-width: 100%; padding: 0 10px; } }
+
+    /* --- NEW Header Structure & Styles (from homepage) --- */
+    /* This OVERRIDES the header from layout.html */
+    header#main-header { /* Override layout.html header if it has this ID */
+        display: none;
+    }
+
+    .header {
+        padding: 0 20px;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        background: rgba(3, 0, 20, .08);
+        left: 0;
+        position: sticky; /* Sticky header for dashboard pages */
+        top: 0;
+        width: 100%; /* Use 100% */
+        z-index: 10;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .header .container-lg {
+        max-width: 1296px;
+        margin: 0 auto;
+        align-items: center;
+        display: flex;
+        justify-content: space-between; /* This will now space nav and actions */
+        padding: 20px 15px; /* Consistent padding */
+        position: relative;
+    }
+    .header-logo { z-index: 2; display: flex; align-items: center; }
+    .header-logo img { height: 36px; width: 36px; border-radius: 50%; margin-right: 12px; }
+    .header-logo-name { font-feature-settings: "ss01" on, "cv10" on, "calt" off, "liga" off; font-size: 16px; line-height: 24px; font-weight: 500; cursor: pointer; }
+    
+    .header-nav { display: flex; /* Navigation moves to the left */ }
+    .header-nav li { margin: 0 12px; }
+    .header-nav-link { font-feature-settings: "ss01" on, "cv10" on, "calt" off, "liga" off; font-size: 14px; line-height: 20px; color: #ffffffe6; display: block; transition: .3s cubic-bezier(.6, .6, 0, 1) color; }
+    .header-nav-link:hover { color: #fff9; }
+    
+    .header-actions { align-items: center; display: flex; z-index: 2; }
+    .user-info { display: flex; align-items: center; margin-right: 24px; }
+    .user-info span { color: #ffffffe6; font-size: 14px; margin-right: 8px; font-weight: 500; }
+    .user-info img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.1); }
+
+    /* Button Styles */
+    .button { font-feature-settings: "ss01" on, "cv10" on, "calt" off, "liga" off; font-size: 14px; line-height: 20px; font-weight: 500; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 8px; color: #f4f0ff; display: inline-block; padding: 8px 16px; position: relative; width: max-content; }
+    .button:before, .button:after, .button-border { border-radius: inherit; height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: -1; }
+    .button:before, .button:after { content: ""; display: block; transition: .2s opacity cubic-bezier(.6, .6, 0, 1); }
+    .button:after { opacity: 0; }
+    .button:hover:before { opacity: 0; }
+    .button:hover:after { opacity: 1; }
+    .button-primary .button-border:before { background: linear-gradient(180deg, rgba(207, 184, 255, .24) 0%, rgba(207, 184, 255, 0) 100%), linear-gradient(0deg, rgba(207, 184, 255, .32), rgba(207, 184, 255, .32)); border-radius: inherit; content: ""; inset: 0; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: xor; -webkit-mask-composite: xor; mask-composite: exclude; padding: 1px; pointer-events: none; position: absolute; }
+    .button-primary:before { background: linear-gradient(180deg, rgba(60, 8, 126, 0) 0%, rgba(60, 8, 126, .32) 100%), rgba(113, 47, 255, .12); box-shadow: inset 0 0 12px #bf97ff3d; }
+    .button-primary:after { background: linear-gradient(180deg, rgba(60, 8, 126, 0) 0%, rgba(60, 8, 126, .42) 100%), rgba(113, 47, 255, .24); box-shadow: inset 0 0 12px #bf97ff70; }
+    .button-secondary .button-border { border: 1px solid rgba(243, 238, 255, .08); }
+    .button-secondary:before { background: linear-gradient(180deg, rgba(243, 238, 255, 0) 0%, rgba(243, 238, 255, .04) 100%), rgba(147, 130, 255, .01); box-shadow: inset 0 0 12px #ffffff14; }
+    .button-secondary:after { box-shadow: inset 0 0 12px #ffffff14; background: linear-gradient(180deg, rgba(243, 238, 255, 0) 0%, rgba(243, 238, 255, .05) 100%), rgba(147, 130, 255, .04); }
+    .header-actions .button:not(:last-child) { margin-right: 12px; }
+
+    @media (max-width: 768px) {
+        .header-nav { display: none; }
+        .header .container-lg { padding: 15px; }
+        .user-info { margin-right: 12px; }
+        .button { padding: 6px 12px; font-size: 12px; }
+    }
+    /* --- End New Header --- */
+
+
+    /* --- Page Wrapper --- */
+    .page-wrapper {
+        padding: 60px 0; /* Add padding below sticky header */
+        position: relative;
+        z-index: 1;
+        min-height: calc(100vh - 150px); /* Fill height between header/footer */
+    }
+
+    /* --- Aeonik Font Styles (Copied from Homepage) --- */
+    .font-aeonik { font-family: 'AeonikPro', system-ui, sans-serif; font-feature-settings: unset; font-weight: 500;}
+    .font-aeonik-h1 { font-size: 72px; line-height: 80px; }
+    .font-aeonik-h2 { font-size: 56px; line-height: 64px; }
+    .font-aeonik-h3 { font-size: 48px; line-height: 56px; }
+    .font-aeonik-h5 { font-size: 32px; line-height: 40px; }
+    @media (max-width: 1248px) {
+        .font-aeonik-h1 { font-size: 44px; line-height: 52px; }
+        .font-aeonik-h2 { font-size: 40px; line-height: 48px; }
+        .font-aeonik-h3 { font-size: 36px; line-height: 40px; }
+        .font-aeonik-h5 { font-size: 32px; line-height: 40px; }
+    }
+
+    /* --- Section Header (Copied from Homepage) --- */
+    .section-header { 
+        position: relative; 
+        z-index: 3; 
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .section-header-title { text-align: center; }
+    .section-header-title span { 
+        background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, .7) 100%); 
+        -webkit-background-clip: text; 
+        background-clip: text; 
+        color: transparent; 
+        -webkit-text-fill-color: transparent; 
+        display: block; 
+    }
+
+    /* --- Server List Styles (BACK TO CARDS) --- */
+    .server-list-container {
+        margin-bottom: 60px; /* Space between sections */
+    }
+    
+    .server-grid {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 columns */
+        gap: 20px;
+    }
+    
+    @media (max-width: 992px) {
+        .server-grid { grid-template-columns: repeat(2, 1fr); } /* 2 columns */
+    }
+    @media (max-width: 576px) {
+        .server-grid { grid-template-columns: 1fr; } /* 1 column */
+    }
+
+
+    .server-card {
+        display: block;
+        text-decoration: none;
+        background: rgba(30, 30, 50, 0.3); /* Faint purple glass */
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(8px); /* Glass effect */
+        -webkit-backdrop-filter: blur(8px);
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                    background 0.3s ease, 
+                    border-color 0.3s ease;
+        z-index: 1;
+        /* Animation properties */
+        opacity: 0;
+        transform: translateY(20px);
+        animation: none; /* Will be triggered by JS */
+    }
+    
+    .server-card::before { /* Hover glow/border effect */
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        /* Mouse move effect properties */
+        background: radial-gradient(
+            300px circle at var(--mouse-x) var(--mouse-y), 
+            rgba(147, 130, 255, 0.25), /* Light source */
+            transparent 40%
+        );
+    }
+    
+    .server-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        background: rgba(40, 40, 60, 0.5);
+        border-color: rgba(147, 130, 255, 0.5); /* Accent border on hover */
+    }
+    
+    .server-card:hover::before {
+        opacity: 1;
+    }
+
+    .server-card img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%; /* Circular icon */
+        margin: 0 auto 15px auto;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0,0,0,0.2); /* Fallback for transparent icons */
+    }
+    
+    .server-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text-primary-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color 0.2s ease;
+    }
+
+    .server-card:hover h3 {
+        color: var(--accent-color-purple); /* Accent color on hover */
+    }
+
+    .server-list-empty { /* Style for the 'no servers' message */
+         text-align: center;
+         color: var(--text-secondary-color);
+         padding: 40px;
+         background: rgba(30, 30, 50, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.08);
+         backdrop-filter: blur(8px);
+         -webkit-backdrop-filter: blur(8px);
+         border-radius: 12px;
+         grid-column: 1 / -1; /* Span full grid */
+         opacity: 0;
+         transform: translateY(20px);
+         animation: none;
+    }
+
+
+    /* --- Re-styled Features List (List, Themed) --- */
+    .features-section {
+         margin-top: 60px;
+         padding-top: 40px;
+         border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+     
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid; /* Use grid for features list */
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        gap: 15px;
+    }
+    .feature-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 20px;
+        background: rgba(30, 30, 50, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        transition: background 0.3s ease;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        /* Animation properties */
+        opacity: 0;
+        transform: translateY(20px);
+        animation: none;
+    }
+    .feature-item:hover {
+         background: rgba(40, 40, 60, 0.5);
+    }
+    .feature-icon-minimal {
+        font-size: 1.5rem;
+        margin-right: 15px;
+        color: var(--accent-color-purple); /* Use accent color */
+        width: 30px; 
+        text-align: center;
+        flex-shrink: 0;
+        padding-top: 3px; 
+    }
+    .feature-text-minimal h4 {
+        margin: 0 0 6px 0;
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: var(--text-primary-color);
+    }
+    .feature-text-minimal p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary-color);
+        line-height: 1.5;
+    }
+    @media (max-width: 768px) {
+        .features-list { grid-template-columns: 1fr; } /* Stack on mobile */
+    }
+
+
+    /* --- Scroll Animations --- */
+     @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+     .animate-on-scroll {
+         opacity: 0;
+         transform: translateY(20px);
+         /* transition: opacity 0.6s ease-out, transform 0.6s ease-out; */ /* Handled by animation */
+     }
+     
+     .is-visible.animate-on-scroll { /* Handle elements observed directly */
+        animation: fadeIn 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+     }
+     
+    /* --- End Scroll Animations --- */
+
+
+    /* --- Footer Styles --- */
+     footer {
+         text-align: center; padding: 40px 0;
+         margin-top: 50px;
+         background-color: rgba(0, 0, 0, 0.2);
+         border-top: 1px solid rgba(255, 255, 255, 0.1);
+         color: var(--text-secondary-color); font-size: 0.95rem;
+         position: relative;
+         z-index: 1;
+     }
+     footer a { color: var(--primary-color); text-decoration: none; margin: 0 10px; }
+     footer a:hover { text-decoration: underline; }
+
+</style>
+
+<header class="header">
+    <div class="container-lg">
+        <nav class="header-nav">
+             <ul class="header-nav">
+                <li><a href="/" class="header-nav-link">Home</a></li>
+             </ul>
+        </nav>
+        
+        <div class="header-actions">
+            {% if user %}
+            <div class="user-info">
+                <span>{{ user.name }}</span>
+                <img src="{{ user.avatar_url }}" alt="User PFP">
+            </div>
+            <a href="/logout" class="button button-secondary">
+                Logout <div class="button-border"></div>
+            </a>
+            {% else %}
+            <a href="/login" class="button button-primary">
+                Login <div class="button-border"></div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<main class="page-wrapper container">
+    <div class="server-list-container">
+        <div class="section-header">
+            <h2 class="section-header-title font-aeonik font-aeonik-h3 animate-on-scroll" data-animation-delay="0.1s">
+                <span>Select a Server to Manage</span>
+            </h2>
+        </div>
+        
+        <div class="server-grid">
+            {% for server in servers %}
+                <a href="/dashboard/{{ server.id }}" class="server-card animate-on-scroll" style="animation-delay: {{ (0.2 + loop.index0 * 0.05) | round(2) }}s;">
+                    <img src="{{ server.icon_url }}" alt="{{ server.name }} icon">
+                    <h3>{{ server.name }}</h3>
+                </a>
+            {% else %}
+                <div class="server-list-empty animate-on-scroll" style="animation-delay: 0.2s;">
+                    You don't have manager permissions in any servers where this bot is present.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="features-section">
+        <div class="section-header features-list-title">
+             <h2 class="section-header-title font-aeonik font-aeonik-h3 animate-on-scroll" style="animation-delay: {{ (0.3 + (servers|length) * 0.05) | round(2) }}s;">
+                 <span>Features Overview</span>
+             </h2>
+        </div>
+        <ul class="features-list">
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 0 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">💬</span>
+                <div class="feature-text-minimal">
+                    <h4>AI Chatbot</h4>
+                    <p>Engage with a powerful AI chatbot with multiple personalities, including the chaotic Demonmode.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 1 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">🚩</span>
+                <div class="feature-text-minimal">
+                    <h4>Flag & Trivia Games</h4>
+                    <p>Challenge your server members with interactive flag quizzes and trivia games of varying difficulty.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 2 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">⚙️</span>
+                <div class="feature-text-minimal">
+                    <h4>Web Dashboard</h4>
+                    <p>Easily manage all bot settings, command permissions, and channels from this user-friendly web interface.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 3 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">🛡️</span>
+                <div class="feature-text-minimal">
+                    <h4>Community Recovery</h4>
+                    <p>A unique authorization system allows the server owner to re-invite members in case of an emergency (requires user opt-in).</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 4 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">🎁</span>
+                <div class="feature-text-minimal">
+                    <h4>Giveaway System</h4>
+                    <p>Run complex giveaways with multiple winners and entry requirements based on user activity streaks.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 5 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">🎲</span>
+                <div class="feature-text-minimal">
+                    <h4>Truth or Dare</h4>
+                    <p>Start a persistent game of Truth or Dare in any channel with a huge bank of questions and dares.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 6 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">📜</span>
+                <div class="feature-text-minimal">
+                    <h4>Advanced Logging</h4>
+                    <p>Keep track of important server events like ghost pings and suspicious new members with a dedicated log channel.</p>
+                </div>
+            </li>
+            <li class="feature-item animate-on-scroll" style="animation-delay: {{ (0.4 + (servers|length) * 0.05 + 7 * 0.05) | round(2) }}s;">
+                <span class="feature-icon-minimal">🔥</span>
+                <div class="feature-text-minimal">
+                    <h4>Roast & Fun Commands</h4>
+                    <p>Liven up the chat with fun commands like roasting users, checking their height, and revealing server lore.</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</main>
+
+<footer>
+    © {{ bot_info.name }} - All rights reserved.
+     <a href="/tos" style="margin-left: 15px;">Terms of Service</a> | <a href="/privacy">Privacy Policy</a>
+</footer>
+
+<script>
+    // --- Core Interactions ---
+    function startInteractions() {
+        // -- Intersection Observer --
+        const observerOptions = { 
+            root: null, 
+            rootMargin: '0px', 
+            threshold: 0.1 // Use a low threshold so animations trigger quickly on this page
+        };
+        
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { 
+                    entry.target.classList.add('is-visible');
+                    // Apply inline delay
+                    const delay = entry.target.style.animationDelay;
+                    if (delay) {
+                        entry.target.style.transitionDelay = delay; // Apply delay to transitions if any
+                    }
+                    obs.unobserve(entry.target); // Unobserve after animating once
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+        // --- Mouse Follow Effect for Cards ---
+        document.querySelectorAll('.server-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.setProperty('--mouse-x', '50%'); // Reset
+                card.style.setProperty('--mouse-y', '50%');
+            });
+        });
+    }
+
+    // --- Floating Particles Background ---
+    // This assumes a <canvas id="bg-particles"> exists in layout.html
+    const particlesCanvas = document.getElementById('bg-particles');
+    if (particlesCanvas) {
+        // FIX: Hide the distracting particles on this page
+        particlesCanvas.style.display = 'none'; 
+    }
+     // --- End Floating Particles ---
+
+
+    // --- Initialization and Secret Knock ---
+    document.addEventListener('DOMContentLoaded', () => {
+         startInteractions(); // Start animations
+        
+         // NOTE: The secret knock script
+         // should be in your layout.html to run on every page.
+         // If it's NOT, uncomment the block below.
+        
+        /*
+        const logo = document.querySelector('.header-logo-name'); // Target text
+        if (logo) { 
+             let clickCount = 0; let lastClickTime = 0; 
+             logo.addEventListener('click', (e) => { 
+                 const now = new Date().getTime(); 
+                 if (now - lastClickTime > 5000) { clickCount = 0; } 
+                 clickCount++; 
+                 lastClickTime = now; 
+                 console.log("Logo clicks:", clickCount); 
+                 if (clickCount >= 7) { window.location.href = '/owner'; clickCount = 0; } 
+             }); 
+         }
+         */
+    });
+</script>
+{% endblock %}

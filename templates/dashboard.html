@@ -1,0 +1,867 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard - {{ server.name }}{% endblock %}
+{% block content %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    .config-card {
+        /* NEW LIGHTER PARENT BG */
+        background-color: rgba(54, 57, 63, 0.75); 
+        border: 1px solid var(--container-border-color);
+        border-radius: 8px;
+        padding: 25px;
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+    .config-card h3 {
+        margin-top: 0;
+        border-bottom: 1px solid var(--container-border-color);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        color: var(--header-color);
+        display: flex;
+        align-items: center;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-secondary-color);
+        text-transform: capitalize;
+    }
+    .form-group select, .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid var(--bg-color);
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+        color: var(--text-primary-color);
+        font-size: 1rem;
+        box-sizing: border-box; 
+        transition: border-color 0.2s;
+    }
+    .form-group input[type="checkbox"] {
+        width: auto;
+        transform: scale(1.2);
+        margin-right: 10px;
+    }
+    .form-group input[type="color"] {
+        height: 50px;
+        width: 100px;
+        padding: 5px;
+    }
+    .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .btn-primary {
+        background-image: var(--accent-gradient);
+        color: white;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+    }
+    .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .permission-card {
+        position: relative;
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--container-border-color);
+    }
+    .permission-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .permission-card-header label {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--text-primary-color);
+        font-weight: 600;
+    }
+    .edit-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .edit-btn:hover {
+        background-color: var(--secondary-color);
+    }
+
+    .pill-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px;
+        border-radius: 5px;
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+        border: 1px dashed var(--container-border-color);
+    }
+    .role-pill {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1px solid rgba(0,0,0,0.2);
+    }
+    .no-roles-text {
+        color: var(--text-secondary-color);
+        font-style: italic;
+        font-size: 0.9rem;
+        align-self: center;
+    }
+
+    .permission-card select[multiple] {
+        display: none;
+    }
+
+    .role-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        width: 100%;
+        /* NEW DARKER DROPDOWN BG */
+        background-color: rgba(30, 33, 36, 0.95); 
+        border: 1px solid var(--container-border-color);
+        border-radius: 8px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        z-index: 100;
+        padding: 15px;
+        box-sizing: border-box;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .role-dropdown.show {
+        display: block;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    .role-dropdown-list {
+        max-height: 180px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    .role-checkbox-item {
+        display: block;
+        margin-bottom: 12px;
+    }
+    .role-checkbox-item label {
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    .role-checkbox-item input {
+        margin-right: 12px;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+    }
+    .dropdown-footer {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--container-border-color);
+        text-align: right;
+    }
+    
+    .leaderboard-toggle {
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    #leaderboardSection { 
+        display: none; 
+    }
+    .leaderboard { 
+        /* NEW LIGHTER PARENT BG */
+        background-color: rgba(54, 57, 63, 0.75);
+        padding: 20px; 
+        border-radius: 8px; 
+        border: 1px solid var(--container-border-color);
+    }
+    .leaderboard h2 { 
+        color: var(--header-color); 
+        text-align: center; 
+        margin-top: 0;
+    }
+    .leaderboard table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        color: var(--text-primary-color); 
+    }
+    .leaderboard th { 
+        padding: 12px; 
+        border-bottom: 2px solid var(--primary-color); 
+        text-align: left;
+    }
+    .leaderboard td { 
+        padding: 10px; 
+        border-bottom: 1px solid var(--container-border-color); 
+    }
+    .leaderboard tbody tr:last-child td { 
+        border-bottom: none; 
+    }
+    .leaderboard .user {
+        display: flex;
+        align-items: center;
+    }
+    .leaderboard .user img { 
+        width: 30px; 
+        height: 30px; 
+        border-radius: 50%; 
+        vertical-align: middle; 
+        margin-right: 10px; 
+    }
+
+    /* New styles for organized sections */
+    .permissions-section h4 {
+        margin-top: 25px;
+        border-bottom: 1px solid var(--container-border-color);
+        padding-bottom: 8px;
+        color: var(--header-color);
+    }
+
+    /* Heatmap styles */
+    .chart-container {
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid var(--container-border-color);
+    }
+
+    .buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+    .color-picker-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .color-picker-group label {
+        margin-bottom: 0;
+    }
+
+    small {
+        font-size: 0.85rem;
+        color: var(--text-secondary-color);
+        display: block;
+        margin-top: 5px;
+    }
+
+    /* New styles for banner upload */
+    .banner-preview {
+        margin-top: 10px;
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        border: 1px solid var(--container-border-color);
+    }
+    
+    .upload-form {
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px dashed var(--container-border-color);
+        margin-top: 10px;
+    }
+    
+    .file-input-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .file-input-group input[type="file"] {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid var(--container-border-color);
+        border-radius: 5px;
+        /* NEW DARKER CHILD BG */
+        background-color: rgba(35, 39, 42, 0.85); 
+    }
+    
+    .current-banner-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--container-border-color);
+    }
+
+    /* NEW: This class will make tables scrollable */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
+
+    /* --- NEW: RESPONSIVE STYLES --- */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr; /* Stack the main cards */
+        }
+        .file-input-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .file-input-group button { width: 100%; }
+        .buttons { justify-content: center; }
+    }
+</style>
+
+<header>
+    <div class="bot-info">
+        <img src="{{ server.icon_url }}" alt="Server Icon">
+        <h1>{{ server.name }}</h1>
+    </div>
+    <nav>
+        <button id="theme-toggle" title="Toggle Theme">☀️</button>
+        <div class="dropdown">
+            <div class="user-info dropdown-toggle">
+                <span>{{ user.name }}</span>
+                <img src="{{ user.avatar_url }}" alt="User PFP">
+            </div>
+            <div class="dropdown-menu">
+                <a href="/select-server">Switch Server</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<form action="/dashboard/{{ server.id }}/update" method="post">
+    <div class="dashboard-grid">
+        <div class="config-card full-width">
+            <h3>🎨 Welcome Banner Settings</h3>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="welcome_banner_enabled" {% if settings.welcome_banner_enabled %}checked{% endif %}>
+                    Enable Custom Welcome Banner
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="welcome_message">Welcome Message</label>
+                <textarea name="welcome_message" id="welcome_message" rows="3" placeholder="Welcome {user} to the server!">{{ settings.welcome_message or 'Welcome {user}!' }}</textarea>
+                <small>Use <code>{user}</code> for the member's name and <code>{member_count}</code> for the server's member count.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="welcome_text_color">Text Color</label>
+                <div class="color-picker-group">
+                    <input type="color" name="welcome_text_color" id="welcome_text_color" value="{{ settings.welcome_text_color or '#FFFFFF' }}">
+                    <span>Selected color: <span id="color-value">{{ settings.welcome_text_color or '#FFFFFF' }}</span></span>
+                </div>
+            </div>
+            
+            {% if settings.welcome_banner_url %}
+            <div class="current-banner-section">
+                <label>Current Banner:</label>
+                <img src="{{ settings.welcome_banner_url }}" alt="Current Welcome Banner" class="banner-preview">
+                <small>This banner will be used for welcome messages.</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="config-card full-width">
+            <h3>📊 Activity Heatmap</h3>
+            <div class="buttons">
+                <button type="button" class="btn btn-primary" onclick="loadHeatmap('1d')">Last 24 Hours</button>
+                <button type="button" class="btn btn-primary" onclick="loadHeatmap('7d')">Last 7 Days</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="activityHeatmapChart"></canvas>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <h3>Channel Settings</h3>
+            <div class="form-group">
+                <label for="log_channel">Log Channel</label>
+                <select name="log_channel" id="log_channel">
+                    <option value="">(Disabled)</option>
+                    {% for channel in channels %}
+                        <option value="{{ channel.id }}" {% if settings.log_channel == channel.id|string %}selected{% endif %}>#{{ channel.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="welcome_channel">Welcome Channel</label>
+                <select name="welcome_channel_id" id="welcome_channel">
+                    <option value="">(Disabled)</option>
+                    {% for channel in channels %}
+                        <option value="{{ channel.id }}" {% if settings.welcome_channel_id == channel.id|string %}selected{% endif %}>#{{ channel.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="birthday_channel">Birthday Channel</label>
+                <select name="birthday_channel_id" id="birthday_channel">
+                    <option value="">(Disabled)</option>
+                    {% for channel in channels %}
+                        <option value="{{ channel.id }}" {% if settings.birthday_channel_id == channel.id|string %}selected{% endif %}>#{{ channel.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+             <div class="form-group">
+                <label for="tod_channel">Truth or Dare Channel</label>
+                <select name="tod_channel_id" id="tod_channel">
+                    <option value="">(Disabled)</option>
+                    {% for channel in channels %}
+                        <option value="{{ channel.id }}" {% if settings.tod_channel_id == channel.id|string %}selected{% endif %}>#{{ channel.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <h3>Bot Personality & Games</h3>
+            <div class="form-group">
+                <label for="bot_mode">AI Personality</label>
+                <select name="bot_mode" id="bot_mode">
+                    <option value="default" {% if settings.bot_mode == 'default' %}selected{% endif %}>Default (Sassy)</option>
+                    <option value="light" {% if settings.bot_mode == 'light' %}selected{% endif %}>Lightmode (Wholesome)</option>
+                    <option value="demon" {% if settings.bot_mode == 'demon' %}selected{% endif %}>Demonmode (Menacing)</option>
+                    <option value="professor" {% if settings.bot_mode == 'professor' %}selected{% endif %}>👨‍🏫 The Professor</option>
+                    <option value="stoic" {% if settings.bot_mode == 'stoic' %}selected{% endif %}>🗿 The Stoic</option>
+                    <option value="robot" {% if settings.bot_mode == 'robot' %}selected{% endif %}>🤖 The Robot</option>
+                    <option value="gen_z" {% if settings.bot_mode == 'gen_z' %}selected{% endif %}>🧢 Gen Z</option>
+                    <option value="dad_joke" {% if settings.bot_mode == 'dad_joke' %}selected{% endif %}>🤣 Dad Jokes</option>
+                    <option value="sassy_butler" {% if settings.bot_mode == 'sassy_butler' %}selected{% endif %}>🕴️ Sassy Butler</option>
+                    <option value="glados" {% if settings.bot_mode == 'glados' %}selected{% endif %}>💀 GLaDOS</option>
+                    <option value="eboy_egirl" {% if settings.bot_mode == 'eboy_egirl' %}selected{% endif %}>🖤 E-boy / E-girl</option>
+                    <option value="ai_partner" {% if settings.bot_mode == 'ai_partner' %}selected{% endif %}>💞 AI Partner</option>
+                    </select>
+            </div>
+            <div class="form-group">
+                <label for="flag_difficulty">Flag Game Difficulty</label>
+                <select name="difficulty" id="flag_difficulty">
+                    <option value="easy" {% if settings.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                    <option value="normal" {% if settings.difficulty == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="hard" {% if settings.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <h3>🤖 AI Member Interviews</h3>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="ai_intro_enabled" {% if settings.ai_intro_enabled %}checked{% endif %}>
+                    Enable AI Introductions
+                </label>
+                <small>When a new user joins, the bot will DM them to ask introduction questions.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="ai_intro_channel">Introduction Channel</label>
+                <select name="ai_intro_channel_id" id="ai_intro_channel">
+                    <option value="">(Disabled)</option>
+                    {% for channel in channels %}
+                        <option value="{{ channel.id }}" {% if settings.ai_intro_channel_id == channel.id|string %}selected{% endif %}>#{{ channel.name }}</option>
+                    {% endfor %}
+                </select>
+                <small>The channel where the bot will post the AI-summarized intros.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="ai_intro_questions">Interview Questions</label>
+                <textarea name="ai_intro_questions" id="ai_intro_questions" rows="4" placeholder="What are your hobbies?&#10;What games do you play?&#10;What brought you here?">{{ ai_questions_text }}</textarea>
+                <small>Enter one question per line. The bot will use these. If left blank, default questions will be used.</small>
+            </div>
+        </div>
+        
+        <div class="config-card full-width">
+            <h3>Command Permissions</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary-color); margin-top: -10px;">
+                Assign roles to commands to grant access. <strong>Moderation commands are disabled by default until roles are assigned here.</strong>
+            </p>
+
+            <div class="permissions-section">
+                <h4>🛡️ Moderation Commands</h4>
+                <div class="permissions-grid" style="margin-top: 15px;">
+                    {% for command in mod_commands %}
+                    <div class="permission-card" data-command="{{ command }}">
+                        <div class="permission-card-header">
+                            <label>{{ command.replace('_', ' ') }}</label>
+                            <button type="button" class="edit-btn">Edit</button>
+                        </div>
+                        <div class="pill-container"></div>
+                        <select name="permissions_{{ command }}" id="perm_{{ command }}" multiple>
+                            {% for role in all_roles %}
+                                <option value="{{ role.id }}" data-color="{{ role.color }}" {% if role.id|string in current_permissions.get(command, []) %}selected{% endif %}>
+                                    {{ role.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="role-dropdown">
+                            <div class="role-dropdown-list"></div>
+                            <div class="dropdown-footer">
+                                <button type="button" class="btn btn-primary save-roles-btn" style="padding: 8px 16px; font-size: 0.9rem;">Done</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="permissions-section">
+                <h4>⚙️ Utility & Game Commands</h4>
+                <div class="permissions-grid" style="margin-top: 15px;">
+                    {% for command in utility_commands %}
+                    <div class="permission-card" data-command="{{ command }}">
+                         <div class="permission-card-header">
+                            <label>{{ command.replace('_', ' ') }}</label>
+                            <button type="button" class="edit-btn">Edit</button>
+                        </div>
+                        <div class="pill-container"></div>
+                        <select name="permissions_{{ command }}" id="perm_{{ command }}" multiple>
+                            {% for role in all_roles %}
+                                <option value="{{ role.id }}" data-color="{{ role.color }}" {% if role.id|string in current_permissions.get(command, []) %}selected{% endif %}>
+                                    {{ role.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="role-dropdown">
+                            <div class="role-dropdown-list"></div>
+                            <div class="dropdown-footer">
+                                <button type="button" class="btn btn-primary save-roles-btn" style="padding: 8px 16px; font-size: 0.9rem;">Done</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button type="submit" class="btn btn-primary">Save All Settings</button>
+    </div>
+</form>
+
+<div class="config-card full-width" style="margin-top: 30px;">
+    <h3>🖼️ Upload Banner Background</h3>
+    <form action="/dashboard/{{ server.id }}/upload_banner" method="post" enctype="multipart/form-data" id="bannerUploadForm">
+        <div class="form-group">
+            <label>Select a new Image or GIF</label>
+            <div class="upload-form">
+                <div class="file-input-group">
+                    <input type="file" name="banner_file" accept="image/png, image/jpeg, image/jpg, image/gif" required>
+                    <button type="submit" class="btn btn-primary">Upload Banner</button>
+                </div>
+                <small>Supported formats: PNG, JPG, GIF. Max file size: 8MB</small>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="leaderboard-toggle">
+    <button class="btn btn-primary" onclick="toggleLeaderboard()">Show/Hide Server Leaderboard</button>
+</div>
+<div id="leaderboardSection" style="margin-top: 30px;">
+    <div class="leaderboard table-container">
+        <h2>🏆 Flag Game Leaderboard 🏆</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th class="rank">#</th>
+                    <th>Player</th>
+                    <th class="score">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in leaderboard %}
+                <tr>
+                    <td class="rank">{{ loop.index }}</td>
+                    <td class="user">
+                        <img src="{{ user.avatar_url }}" alt="Avatar">
+                        <span>{{ user.name }}</span>
+                    </td>
+                    <td class="score">{{ "{:,}".format(user.score) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align:center;">No one has scored in this server yet!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    function getTextColorForBg(hexColor) {
+        if (!hexColor || hexColor === '#000000') return '#ffffff';
+        const r = parseInt(hexColor.substr(1, 2), 16);
+        const g = parseInt(hexColor.substr(3, 2), 16);
+        const b = parseInt(hexColor.substr(5, 2), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? '#000000' : '#ffffff';
+    }
+
+    function updatePillDisplay(permissionCard) {
+        const selectEl = permissionCard.querySelector('select');
+        const pillContainer = permissionCard.querySelector('.pill-container');
+        pillContainer.innerHTML = '';
+        const selectedOptions = Array.from(selectEl.selectedOptions);
+
+        if (selectedOptions.length === 0) {
+            pillContainer.innerHTML = '<span class="no-roles-text">No roles assigned</span>';
+            return;
+        }
+
+        selectedOptions.forEach(option => {
+            const pill = document.createElement('span');
+            pill.className = 'role-pill';
+            pill.textContent = `@${option.textContent.trim()}`;
+            
+            const roleColor = option.dataset.color;
+            pill.style.backgroundColor = roleColor;
+            pill.style.color = getTextColorForBg(roleColor);
+
+            pillContainer.appendChild(pill);
+        });
+    }
+
+    document.querySelectorAll('.permission-card').forEach(updatePillDisplay);
+
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const card = button.closest('.permission-card');
+            const dropdown = card.querySelector('.role-dropdown');
+            const isOpen = dropdown.classList.contains('show');
+
+            document.querySelectorAll('.role-dropdown.show').forEach(d => d.classList.remove('show'));
+            
+            if (isOpen) return;
+
+            const selectEl = card.querySelector('select');
+            const dropdownList = dropdown.querySelector('.role-dropdown-list');
+            dropdownList.innerHTML = '';
+
+            Array.from(selectEl.options).forEach(option => {
+                const item = document.createElement('div');
+                item.className = 'role-checkbox-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `dd_role_${card.dataset.command}_${option.value}`;
+                checkbox.value = option.value;
+                checkbox.checked = option.selected;
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `dd_role_${card.dataset.command}_${option.value}`);
+                
+                const roleColor = option.dataset.color === '#000000' ? 'var(--text-secondary-color)' : option.dataset.color;
+                label.innerHTML = `<span style="color: ${roleColor}; font-weight: 600;">@${option.textContent.trim()}</span>`;
+                
+                label.prepend(checkbox);
+                item.appendChild(label);
+                dropdownList.appendChild(item);
+            });
+
+            dropdown.classList.add('show');
+        });
+    });
+
+document.querySelectorAll('.save-roles-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const dropdown = button.closest('.role-dropdown');
+            const card = dropdown.closest('.permission-card');
+            const selectEl = card.querySelector('select');
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+
+            checkboxes.forEach(checkbox => {
+                const option = selectEl.querySelector(`option[value="${checkbox.value}"]`);
+                if (option) {
+                    option.selected = checkbox.checked;
+                }
+            });
+
+            updatePillDisplay(card);
+            dropdown.classList.remove('show');
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        const openDropdown = document.querySelector('.role-dropdown.show');
+        if (openDropdown && !openDropdown.closest('.permission-card').contains(e.target)) {
+            openDropdown.classList.remove('show');
+        }
+    });
+
+    // Color picker value display
+    const colorPicker = document.getElementById('welcome_text_color');
+    const colorValue = document.getElementById('color-value');
+    if (colorPicker && colorValue) {
+        colorPicker.addEventListener('input', function() {
+            colorValue.textContent = this.value;
+        });
+    }
+
+    // Banner upload form handling
+    const bannerUploadForm = document.getElementById('bannerUploadForm');
+    if (bannerUploadForm) {
+        bannerUploadForm.addEventListener('submit', function(e) {
+            const fileInput = this.querySelector('input[type="file"]');
+            if (fileInput.files.length === 0) {
+                e.preventDefault();
+                alert('Please select a file to upload.');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const maxSize = 8 * 1024 * 1024; // 8MB
+            if (file.size > maxSize) {
+                e.preventDefault();
+                alert('File size too large. Please select a file smaller than 8MB.');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Uploading...';
+            submitBtn.disabled = true;
+        });
+    }
+});
+
+function toggleLeaderboard() {
+    var section = document.getElementById('leaderboardSection');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+// Activity Heatmap Script
+const heatmapCtx = document.getElementById('activityHeatmapChart').getContext('2d');
+let heatmapChart;
+
+async function loadHeatmap(timespan) {
+    try {
+        const response = await fetch(`/api/activity_heatmap/{{ server.id }}?timespan=${timespan}`);
+        const result = await response.json();
+
+        if (result.success) {
+            if (heatmapChart) {
+                heatmapChart.destroy();
+            }
+            
+            const isDaily = timespan === '1d';
+            const label = isDaily ? 'Interactions (Last 24 Hours)' : 'Interactions (Last 7 Days)';
+            
+            heatmapChart = new Chart(heatmapCtx, {
+                type: 'bar',
+                data: {
+                    labels: result.labels,
+                    datasets: [{
+                        label: label,
+                        data: result.data,
+                        backgroundColor: 'rgba(88, 101, 242, 0.6)',
+                        borderColor: 'rgba(88, 101, 242, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'var(--text-primary-color)'
+                            },
+                            grid: {
+                                color: 'var(--container-border-color)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'var(--text-primary-color)'
+                            },
+                            grid: {
+                                color: 'var(--container-border-color)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'var(--text-primary-color)'
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.error('Failed to load heatmap data');
+        }
+    } catch (error) {
+        console.error('Error loading heatmap:', error);
+    }
+}
+
+// Load the 7-day view by default
+loadHeatmap('7d');
+</script>
+{% endblock %}

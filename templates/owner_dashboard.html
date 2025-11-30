@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Owner Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0E1117; 
+            --card-bg-color: #161920; 
+            --border-color: #30363d;
+            --text-primary-color: #FFFFFF; 
+            --text-secondary-color: #A1A1AA;
+            --primary-color: #5865F2; 
+            --green: #2ECC71; 
+            --red: #E74C3C;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color);
+            color: var(--text-primary-color); 
+            margin: 0; 
+            padding: 1rem; /* Adjusted padding for mobile */
+        }
+        
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+        }
+        
+        header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 1rem; 
+            margin-bottom: 2rem;
+            flex-wrap: wrap; /* Allow header to wrap on small screens */
+        }
+
+        header h1 {
+            font-size: 1.5rem; /* Adjust heading size for mobile */
+        }
+        
+        .user-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        .user-info img { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+        }
+        
+        h1, h2 { 
+            margin-top: 0; 
+        }
+        
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1.5fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .main-grid { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        
+        .left-column { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5rem; 
+        }
+        
+        .right-column { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 1.5rem; 
+        }
+        
+        .bottom-row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        
+        .stat-card, .chart-card, .action-card {
+            background-color: var(--card-bg-color); 
+            border: 1px solid var(--border-color);
+            border-radius: 8px; 
+            padding: 1.5rem;
+        }
+        
+        .stat-card h3 { 
+            margin: 0 0 0.5rem; 
+            font-size: 1rem; 
+            color: var(--text-secondary-color); 
+            font-weight: 600; 
+        }
+        
+        .stat-card .value { 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            color: var(--primary-color); 
+        }
+        
+        .chart-card h2 { 
+            text-align: center; 
+            margin-bottom: 1.5rem; 
+            font-size: 1.25rem; /* Adjust chart title size */
+        }
+        
+        .server-selector { 
+            margin-bottom: 1.5rem; 
+            text-align: center; 
+        }
+        
+        .server-selector label { 
+            margin-right: 10px; 
+            color: var(--text-secondary-color); 
+        }
+        
+        .server-selector select { 
+            padding: 8px 12px; 
+            font-size: 1rem; 
+            background-color: var(--bg-color); 
+            color: var(--text-primary-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+        }
+        
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+        }
+        
+        .buttons { 
+            text-align: center; 
+        }
+        
+        .buttons button { 
+            background: #2a2d31; 
+            color: white; 
+            border: 1px solid var(--border-color); 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 0 5px; 
+            transition: background 0.3s; 
+        }
+        
+        .buttons button:hover { 
+            background: #4752c4; 
+        }
+        
+        .buttons button.active { 
+            background: var(--primary-color); 
+            border-color: var(--primary-color); 
+        }
+        
+        .action-card textarea { 
+            width: 100%; 
+            box-sizing: border-box;
+            height: 120px; 
+            background-color: var(--bg-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            color: var(--text-primary-color); 
+            font-family: 'Inter', sans-serif; 
+            font-size: 1rem; 
+            padding: 10px; 
+            margin-bottom: 1rem; 
+            resize: vertical; 
+        }
+        
+        .action-card button { 
+            width: 100%; 
+            padding: 1rem; 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            color: white; 
+            background-color: var(--primary-color); 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
+        
+        /* --- NEW STYLES START --- */
+        .table-container {
+            overflow-x: auto; /* This makes the table scroll horizontally on small screens */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .kpi-card h3 {
+            margin: 0 0 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+            font-weight: 600;
+        }
+
+        .kpi-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .kpi-card .value.android { color: var(--green); }
+        .kpi-card .value.ios { color: #A1A1AA; }
+        .kpi-card .value.crash-free { color: var(--green); }
+        .kpi-card .value.crash-free.low { color: var(--red); }
+
+        .device-charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Search Bar Styles */
+        .search-bar { 
+            margin-bottom: 1rem; 
+            display: flex; 
+            justify-content: flex-end; 
+        }
+        
+        .search-bar input { 
+            padding: 8px 12px; 
+            font-size: 1rem; 
+            background-color: var(--bg-color); 
+            color: var(--text-primary-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            width: 300px; 
+        }
+
+        .header-with-search {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* --- RESPONSIVE STYLES (PHONE SUPPORT) --- */
+        @media (max-width: 1200px) {
+            .top-grid {
+                grid-template-columns: 1fr 1fr; /* 2 columns on tablets */
+            }
+            .main-grid {
+                grid-template-columns: 1fr; /* Stack columns on tablets */
+            }
+            .right-column {
+                grid-template-columns: 1fr; /* Stack charts in right column */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            header { flex-direction: column; gap: 1rem; }
+
+            .top-grid, .main-grid, .right-column, .bottom-row, .device-charts-grid {
+                grid-template-columns: 1fr; /* Stack everything into a single column on mobile */
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr; /* 2x2 grid for KPIs on mobile */
+            }
+            h1 { font-size: 1.8rem; }
+            .stat-card .value { font-size: 2rem; }
+            .kpi-card .value { font-size: 1.5rem; }
+            
+            .header-with-search {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-bar {
+                justify-content: stretch;
+            }
+            
+            .search-bar input {
+                width: 100%;
+            }
+        }
+        /* --- NEW STYLES END --- */
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background-color: var(--card-bg-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            overflow: hidden; 
+            font-size: 0.9rem; 
+            min-width: 600px; /* Ensures columns don't get too squished before scrolling starts */
+        }
+        
+        th, td { 
+            padding: 0.8rem 1rem; 
+            text-align: left; 
+            border-bottom: 1px solid var(--border-color); 
+            white-space: nowrap; /* Prevent text wrapping in table cells */
+        }
+        
+        th { 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            color: var(--text-secondary-color); 
+        }
+        
+        tr:last-child td { 
+            border-bottom: none; 
+        }
+        
+        td .server-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
+        
+        td .server-info img { 
+            width: 35px; 
+            height: 35px; 
+            border-radius: 8px; 
+        }
+        
+        .toggle-switch { 
+            position: relative; 
+            display: inline-block; 
+            width: 50px; 
+            height: 28px; 
+        }
+        
+        .toggle-switch input { 
+            opacity: 0; 
+            width: 0; 
+            height: 0; 
+        }
+        
+        .slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background-color: var(--red); 
+            transition: .4s; 
+            border-radius: 28px; 
+        }
+        
+        .slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 20px; 
+            width: 20px; 
+            left: 4px; 
+            bottom: 4px; 
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%; 
+        }
+        
+        input:checked + .slider { 
+            background-color: var(--green); 
+        }
+        
+        input:checked + .slider:before { 
+            transform: translateX(22px); 
+        }
+        
+        .streaks-btn { 
+            background-color: #333; 
+            border: 1px solid var(--border-color); 
+            color: white; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-right: 5px; 
+            font-size: 0.8rem; 
+        }
+        
+        .streaks-btn.delete { 
+            background-color: var(--red); 
+        }
+        
+        .chart-subtitle {
+            text-align: center; 
+            color: var(--text-secondary-color); 
+            margin-top: -1rem; 
+            margin-bottom: 1rem;
+        }
+
+        .analytics-btn { background-color: var(--primary-color); border: none; color: white; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s; }
+        .analytics-btn:hover { background-color: #4752c4; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); }
+        .modal-content { background-color: var(--card-bg-color); margin: 5% auto; padding: 2rem; border: 1px solid var(--border-color); border-radius: 8px; width: 80%; max-width: 800px; position: relative; }
+        .close-btn { color: var(--text-secondary-color); float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
+        .close-btn:hover { color: var(--text-primary-color); }
+        .modal-buttons { text-align: center; margin: 1.5rem 0; }
+        .modal-buttons button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin: 0 10px; font-weight: 600; }
+        .modal-buttons button:hover { background: #4752c4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👑 Owner Control Center</h1>
+            <div class="user-info">
+                <span>{{ user.name }}</span>
+                <img src="{{ user.avatar_url }}" alt="User PFP">
+            </div>
+        </header>
+
+        <!-- Updated Top Grid Layout -->
+        <div class="top-grid">
+            <div class="stat-card">
+                <h3>Total Servers</h3>
+                <div class="value">{{ stats.total_servers }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="value">{{ "{:,}".format(stats.total_users) }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Live Latency</h3>
+                <div class="value" id="latency-display" style="color: var(--green);">-- ms</div>
+            </div>
+            <div class="action-card">
+                <h2>📢 Global Announcement</h2>
+                <form action="/owner/announce" method="POST">
+                    <textarea name="message" placeholder="Type your announcement here..." required></textarea>
+                    <button type="submit">Send to All Servers</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Updated Main Grid Layout -->
+        <div class="main-grid">
+            <div class="chart-card">
+                <h2>📊 Total Bot Interactions</h2>
+                <div class="server-selector">
+                    <label for="server-select">Displaying Stats For:</label>
+                    <select id="server-select">
+                        <option value="all" selected>All Servers</option>
+                        {% for server in servers %}
+                            <option value="{{ server.id }}">{{ server.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="buttons">
+                    <button id="dailyBtn">Daily</button>
+                    <button id="weeklyBtn" class="active">Weekly</button>
+                    <button id="liveBtn">Live</button>
+                </div>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="totalInteractionsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h2>⚙️ Usage by Category</h2>
+                <div class="chart-container" style="height: 450px;">
+                    <canvas id="usageByCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-row">
+            <div class="chart-card">
+                <h2>🌐 Server Distribution</h2>
+                <p class="chart-subtitle">Based on member count</p>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="serverDistributionChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h2>📈 Bot Usage by Server</h2>
+                <p class="chart-subtitle">Top 9 Servers (Last 7 Days)</p>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="usageByServerChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 1rem;">📱 Phone & OS Analytics</h2>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Total Active Users</h3>
+                <div class="value">220,544</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Android Users</h3>
+                <div class="value android">150,432 (68%)</div>
+            </div>
+            <div class="kpi-card">
+                <h3>iOS Users</h3>
+                <div class="value ios">70,112 (32%)</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Crash-Free Rate</h3>
+                <div class="value crash-free">99.6%</div>
+            </div>
+        </div>
+        
+        <div class="device-charts-grid">
+            <div class="chart-card">
+                <h2>OS Distribution</h2>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="osDistributionChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h2>Top 10 Device Models</h2>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="topDevicesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container" style="margin-bottom: 2rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device Model</th>
+                        <th>OS Version</th>
+                        <th>User Count</th>
+                        <th>Crash-Free Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>iPhone 15 Pro</td>
+                        <td>iOS 17.1</td>
+                        <td>12,504</td>
+                        <td style="color: var(--green);">99.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Samsung Galaxy S23</td>
+                        <td>Android 14</td>
+                        <td>10,831</td>
+                        <td style="color: var(--green);">99.5%</td>
+                    </tr>
+                    <tr>
+                        <td>Google Pixel 8 Pro</td>
+                        <td>Android 14</td>
+                        <td>7,645</td>
+                        <td style="color: var(--red);">98.1%</td>
+                    </tr>
+                    <tr>
+                        <td>iPhone 13</td>
+                        <td>iOS 16.6</td>
+                        <td>6,988</td>
+                        <td style="color: var(--green);">99.7%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Updated Server Management Section with Search -->
+        <div class="header-with-search">
+            <h2>Server Management</h2>
+            <div class="search-bar">
+                <input type="text" id="serverSearch" placeholder="Search by Server ID or Name...">
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="serverTable">
+                <thead>
+                    <tr>
+                        <th>Server</th>
+                        <th>ID</th>
+                        <th>Members</th>
+                        <th>Status</th>
+                        <th>Admin Perms?</th>
+                        <th>Analytics</th>
+                        <th>Streak Controls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for server in servers %}
+                    <tr data-server-id="{{ server.id }}" data-server-name="{{ server.name.lower() }}">
+                        <td>
+                            <div class="server-info">
+                                <img src="{{ server.icon_url }}" alt="Server Icon">
+                                <span>{{ server.name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ server.id }}</td>
+                        <td>{{ server.member_count }}</td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox" onchange="toggleGuild(this, '{{ server.id }}')" {% if not server.is_deactivated %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>
+                            {% if server.has_admin %} ✅ {% else %} ❌ {% endif %}
+                        </td>
+                        <td>
+                            <button class="analytics-btn" onclick="openAnalyticsModal('{{ server.id }}', '{{ server.name }}')">📈 Analytics</button>
+                        </td>
+                        <td>
+                            <button class="streaks-btn" onclick="manageStreaks('{{ server.id }}', 'enable')">Enable</button>
+                            <button class="streaks-btn" onclick="manageStreaks('{{ server.id }}', 'disable')">Disable</button>
+                            <button class="streaks-btn delete" onclick="manageStreaks('{{ server.id }}', 'delete')">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAnalyticsModal()">&times;</span>
+            <h2 id="modalTitle">Activity Heatmap</h2>
+            <div class="modal-buttons">
+                <button type="button" onclick="loadModalHeatmap('1d')">Last 24 Hours</button>
+                <button type="button" onclick="loadModalHeatmap('7d')">Last 7 Days</button>
+            </div>
+            <div class="chart-container" style="height: 300px; margin-top: 1.5rem;">
+                <canvas id="modalHeatmapChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // === CHART 1: TOTAL INTERACTIONS (LINE) ===
+    const totalCtx = document.getElementById("totalInteractionsChart").getContext("2d");
+    const serverSelect = document.getElementById('server-select');
+    let totalChart;
+    let currentMode = 'weekly';
+    let currentGuildId = 'all';
+
+    async function fetchTotalData(guildId, timespan) {
+        try {
+            const url = guildId === 'all' ? `/api/owner/guild_stats/` : `/api/owner/guild_stats/${guildId}`;
+            const response = await fetch(`${url}?timespan=${timespan}`);
+            const data = await response.json();
+            if (data.success) return { labels: data.labels, data: data.data };
+        } catch (error) { console.error("Failed to fetch total chart data:", error); }
+        return { labels: [], data: [] };
+    }
+
+    function createOrUpdateTotalChart(labels, data, mode) {
+        if (totalChart) totalChart.destroy();
+        totalChart = new Chart(totalCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Total Interactions",
+                    data: data,
+                    borderColor: "#5865f2",
+                    backgroundColor: "rgba(88, 101, 242, 0.2)",
+                    fill: true,
+                    tension: mode === 'live' ? 0 : 0.3
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    x: { 
+                        ticks: { color: "white" }, 
+                        grid: { color: "rgba(255,255,255,0.08)" } 
+                    }, 
+                    y: { 
+                        ticks: { color: "white" }, 
+                        grid: { color: "rgba(255,255,255,0.08)" }, 
+                        beginAtZero: true 
+                    } 
+                }, 
+                plugins: { 
+                    legend: { 
+                        labels: { color: "white" } 
+                    } 
+                } 
+            }
+        });
+    }
+    
+    // === CHART 2: USAGE BY CATEGORY (PIE) ===
+    const categoryCtx = document.getElementById('usageByCategoryChart').getContext('2d');
+    const categoryLabels = {{ usage_chart_labels|tojson }};
+    const categoryData = {{ usage_chart_data|tojson }};
+    new Chart(categoryCtx, {
+        type: 'pie',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                label: 'Bot Interactions',
+                data: categoryData,
+                backgroundColor: ['#5865F2', '#2ECC71', '#F1C40F', '#E67E22', '#E74C3C', '#9B59B6', '#3498DB', '#1ABC9C', '#34495E', '#95A5A6'],
+                borderColor: '#161920',
+                borderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'top', 
+                    labels: { 
+                        color: '#FFFFFF' 
+                    } 
+                } 
+            } 
+        }
+    });
+
+    // === CHART 3: SERVER DISTRIBUTION (PIE) ===
+    const serverDistCtx = document.getElementById('serverDistributionChart').getContext('2d');
+    const serverLabels = {{ chart_labels|tojson }};
+    const serverData = {{ chart_data|tojson }};
+    new Chart(serverDistCtx, {
+        type: 'pie',
+        data: {
+            labels: serverLabels,
+            datasets: [{
+                label: 'Member Count',
+                data: serverData,
+                backgroundColor: ['#5865F2', '#E74C3C', '#2ECC71', '#9B59B6', '#3498DB', '#F1C40F', '#E67E22', '#1ABC9C', '#34495E', '#95A5A6'],
+                borderColor: '#161920',
+                borderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'top', 
+                    labels: { 
+                        color: '#FFFFFF' 
+                    } 
+                } 
+            } 
+        }
+    });
+
+    // === CHART 4: USAGE BY SERVER (PIE) ===
+    const usageServerCtx = document.getElementById('usageByServerChart').getContext('2d');
+    const usageServerLabels = {{ usage_server_labels|tojson }};
+    const usageServerData = {{ usage_server_data|tojson }};
+    new Chart(usageServerCtx, {
+        type: 'pie',
+        data: {
+            labels: usageServerLabels,
+            datasets: [{
+                label: 'Bot Interactions',
+                data: usageServerData,
+                backgroundColor: ['#5865F2', '#2ECC71', '#F1C40F', '#E67E22', '#E74C3C', '#9B59B6', '#3498DB', '#1ABC9C', '#34495E', '#95A5A6'],
+                borderColor: '#161920',
+                borderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'top', 
+                    labels: { 
+                        color: '#FFFFFF' 
+                    } 
+                } 
+            } 
+        }
+    });
+
+    /* --- NEW CHART JS - PHONE ANALYTICS --- */
+    // === OS DISTRIBUTION CHART (DOUGHNUT) ===
+    const osCtx = document.getElementById('osDistributionChart').getContext('2d');
+    new Chart(osCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Android', 'iOS', 'Other'],
+            datasets: [{
+                label: 'OS Distribution',
+                data: [150432, 70112, 500], // Dummy data
+                backgroundColor: ['#2ECC71', '#A1A1AA', '#3498DB'],
+                borderColor: '#161920',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { color: 'white' } }
+            }
+        }
+    });
+
+    // === TOP DEVICES CHART (HORIZONTAL BAR) ===
+    const devicesCtx = document.getElementById('topDevicesChart').getContext('2d');
+    new Chart(devicesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['iPhone 15', 'Galaxy S23', 'Pixel 8', 'iPhone 14', 'Galaxy A54', 'iPhone 13'], // Dummy labels
+            datasets: [{
+                label: 'User Count',
+                data: [12504, 10831, 7645, 7102, 6598, 5432], // Dummy data
+                backgroundColor: 'rgba(88, 101, 242, 0.6)',
+                borderColor: 'rgba(88, 101, 242, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y', // This makes the bar chart horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.08)" } },
+                y: { ticks: { color: "white" }, grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false } // Hide legend for cleaner look
+            }
+        }
+    });
+    /* --- END OF NEW CHART JS --- */
+
+    // === UNIVERSAL CONTROLS & SOCKETS ===
+    const socket = io();
+
+    async function updateAllDisplays() {
+        document.querySelectorAll('.buttons button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`${currentMode}Btn`).classList.add('active');
+        socket.off('live_update');
+
+        if (currentMode === 'live') {
+            createOrUpdateTotalChart([], [], 'live');
+            let liveLabels = [];
+            let liveData = [];
+            socket.on('live_update', (update) => {
+                if (currentGuildId !== 'all' && update.guild_id !== currentGuildId) return;
+                if (liveLabels.length > 60) { liveLabels.shift(); liveData.shift(); }
+                const label = new Date(update.timestamp).toLocaleTimeString();
+                liveLabels.push(label);
+                liveData.push(update.count);
+                totalChart.data.labels = liveLabels;
+                totalChart.data.datasets[0].data = liveData;
+                totalChart.update('none');
+            });
+        } else {
+            const { labels, data } = await fetchTotalData(currentGuildId, currentMode);
+            createOrUpdateTotalChart(labels, data, 'line');
+        }
+    }
+
+    document.getElementById('dailyBtn').onclick = () => { currentMode = 'daily'; updateAllDisplays(); };
+    document.getElementById('weeklyBtn').onclick = () => { currentMode = 'weekly'; updateAllDisplays(); };
+    document.getElementById('liveBtn').onclick = () => { currentMode = 'live'; updateAllDisplays(); };
+    serverSelect.onchange = (event) => { currentGuildId = event.target.value; updateAllDisplays(); };
+    
+    updateAllDisplays(); // Initial load
+
+    function toggleGuild(checkbox, guildId) {
+        const is_active = checkbox.checked;
+        fetch(`/owner/guild/${guildId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active: is_active })
+        }).then(response => {
+            if (!response.ok) {
+                alert('Failed to update server status.');
+                checkbox.checked = !is_active;
+            }
+        });
+    }
+
+    function manageStreaks(guildId, action) {
+        let confirmMessage = `Are you sure you want to ${action} streaks for this server?`;
+        if (action === 'delete') {
+            confirmMessage = "WARNING: This will permanently delete all streak data for this server. This cannot be undone. Are you sure?";
+        }
+        if (confirm(confirmMessage)) {
+            fetch(`/owner/guild/${guildId}/streaks/${action}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert(`Successfully performed '${action}' action on streaks.`);
+                } else {
+                    alert('An error occurred.');
+                }
+            });
+        }
+    }
+
+    // === NEW SCRIPT FOR ANALYTICS MODAL ===
+    const modal = document.getElementById('analyticsModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalCtx = document.getElementById('modalHeatmapChart').getContext('2d');
+    let modalChart;
+    let currentModalGuildId = null;
+
+    function openAnalyticsModal(guildId, guildName) {
+        currentModalGuildId = guildId;
+        modalTitle.textContent = `Activity Heatmap for ${guildName}`;
+        modal.style.display = 'block';
+        loadModalHeatmap('7d'); // Load default view
+    }
+
+    function closeAnalyticsModal() {
+        modal.style.display = 'none';
+        if (modalChart) {
+            modalChart.destroy();
+        }
+    }
+
+    async function loadModalHeatmap(timespan) {
+        if (!currentModalGuildId) return;
+        try {
+            const response = await fetch(`/api/activity_heatmap/${currentModalGuildId}?timespan=${timespan}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                if (modalChart) {
+                    modalChart.destroy();
+                }
+                
+                const isDaily = timespan === '1d';
+                const label = isDaily ? 'Interactions (Last 24 Hours)' : 'Interactions (Last 7 Days)';
+                
+                modalChart = new Chart(modalCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: result.labels,
+                        datasets: [{
+                            label: label,
+                            data: result.data,
+                            backgroundColor: 'rgba(88, 101, 242, 0.6)',
+                            borderColor: 'rgba(88, 101, 242, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'var(--text-primary-color)'
+                                },
+                                grid: {
+                                    color: 'var(--border-color)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'var(--text-primary-color)'
+                                },
+                                grid: {
+                                    color: 'var(--border-color)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'var(--text-primary-color)'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error('Failed to load heatmap data');
+            }
+        } catch (error) {
+            console.error('Error loading heatmap:', error);
+        }
+    }
+
+    // Close modal if user clicks outside of it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeAnalyticsModal();
+        }
+    }
+
+    // --- CORRECTED SCRIPT FOR LIVE LATENCY ---
+    const latencyDisplay = document.getElementById('latency-display');
+    
+    // Listen for the 'latency_update' event from the server
+    socket.on('latency_update', function(data) {
+        const latency = data.latency;
+        latencyDisplay.textContent = `${latency} ms`;
+
+        // Change color based on ping
+        if (latency < 150) {
+            latencyDisplay.style.color = 'var(--green)'; // Green for fast
+        } else if (latency < 300) {
+            latencyDisplay.style.color = '#F1C40F'; // Yellow for medium
+        } else {
+            latencyDisplay.style.color = 'var(--red)'; // Red for slow
+        }
+    });
+
+    // --- NEW SCRIPT FOR SERVER SEARCH ---
+    const searchInput = document.getElementById('serverSearch');
+    const serverTable = document.getElementById('serverTable');
+    const tableRows = serverTable.querySelectorAll('tbody tr');
+
+    searchInput.addEventListener('keyup', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+
+        tableRows.forEach(row => {
+            const serverId = row.dataset.serverId;
+            const serverName = row.dataset.serverName;
+
+            // Check if the search term matches either the ID or the name
+            if (serverId.includes(searchTerm) || serverName.includes(searchTerm)) {
+                row.style.display = ''; // Show the row
+            } else {
+                row.style.display = 'none'; // Hide the row
+            }
+        });
+    });
+</script>
+</body>
+</html>

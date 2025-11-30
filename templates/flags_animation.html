@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYSTEM COMPROMISED - FLAGS VIRUS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #00f0ff;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* MAIN OVERLAY */
+        .flags-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* TV STATIC / HACKER BACKGROUND */
+        .tv-static {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.03) 2px, rgba(0, 240, 255, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 240, 255, 0.02) 2px, rgba(0, 240, 255, 0.02) 4px);
+            opacity: 0.3;
+            z-index: 1;
+            animation: staticFlicker 0.1s infinite;
+        }
+
+        .phase-red .tv-static {
+            background: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,0,51,0.03) 2px, rgba(255,0,51,0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,0,51,0.02) 2px, rgba(255,0,51,0.02) 4px);
+        }
+
+        @keyframes staticFlicker {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+        }
+
+        /* SCREEN SHAKE */
+        .screen-shake {
+            animation: screenShake 0.1s infinite;
+        }
+
+        @keyframes screenShake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-5px, 5px); }
+            50% { transform: translate(5px, -5px); }
+            75% { transform: translate(-3px, 3px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* PHASE 1 - BLUE BOOT */
+        .phase-blue {
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 40, 80, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0, 20, 40, 0.3) 0%, transparent 50%),
+                #000;
+        }
+
+        /* PHASE 2 - RED TAKEOVER */
+        .phase-red {
+            background: 
+                radial-gradient(circle at 30% 50%, rgba(80, 0, 0, 0.6) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(40, 0, 0, 0.4) 0%, transparent 50%),
+                #110000 !important;
+        }
+
+        /* SCREEN PARTITIONS */
+        .screen-partitions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .screen-partition {
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .partition-glitching {
+            animation: partitionGlitch 0.1s infinite;
+            border: 1px solid #ff0033;
+            background: rgba(255, 0, 51, 0.1);
+        }
+
+        @keyframes partitionGlitch {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* TECH GRID */
+        .tech-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            transition: all 1.5s ease;
+        }
+
+        .phase-red .tech-grid {
+            background: 
+                linear-gradient(90deg, rgba(255, 0, 51, 0.05) 1px, transparent 1px),
+                linear-gradient(rgba(255, 0, 51, 0.05) 1px, transparent 1px);
+        }
+
+        /* MAIN CONTAINER */
+        .main-container {
+            text-align: center;
+            z-index: 10000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            transition: all 0.3s ease;
+        }
+
+        .main-container.hidden {
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        /* LOADING CUBE */
+        .loading-cube {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 40px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: cubeRotate 4s linear infinite;
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 2px solid #00f0ff;
+            background: transparent;
+            transition: all 1s ease;
+        }
+
+        .phase-red .cube-face {
+            border-color: #ff0033;
+        }
+
+        .cube-face.front { transform: translateZ(40px); }
+        .cube-face.back { transform: translateZ(-40px) rotateY(180deg); }
+        .cube-face.right { transform: rotateY(90deg) translateZ(40px); }
+        .cube-face.left { transform: rotateY(-90deg) translateZ(40px); }
+        .cube-face.top { transform: rotateX(90deg) translateZ(40px); }
+        .cube-face.bottom { transform: rotateX(-90deg) translateZ(40px); }
+
+        @keyframes cubeRotate {
+            0% { transform: rotateX(0) rotateY(0) rotateZ(0); }
+            100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+        }
+
+        /* TECH TEXT */
+        .tech-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #00f0ff;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            position: relative;
+            transition: all 1s ease;
+        }
+
+        .phase-red .tech-text {
+            color: #ff0033;
+            text-shadow: 0 0 10px rgba(255, 0, 51, 0.5);
+        }
+
+        .tech-text::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+            transition: all 1s ease;
+        }
+
+        .phase-red .tech-text::after {
+            background: linear-gradient(90deg, transparent, #ff0033, transparent);
+        }
+
+        /* LOADER */
+        .modern-loader {
+            width: 400px;
+            height: 6px;
+            background: rgba(0, 240, 255, 0.1);
+            border-radius: 3px;
+            margin: 30px auto;
+            overflow: hidden;
+            position: relative;
+            transition: all 1s ease;
+        }
+
+        .phase-red .modern-loader {
+            background: rgba(255, 0, 51, 0.1);
+        }
+
+        .loader-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00f0ff, #0077ff);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .phase-red .loader-fill {
+            background: linear-gradient(90deg, #ff0033, #ff3366);
+        }
+
+        .loader-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 20px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8));
+            animation: loaderShine 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loaderShine {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(400px); }
+        }
+
+        /* STATUS CONSOLE */
+        .status-console {
+            width: 500px;
+            height: 120px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            margin: 20px auto;
+            padding: 15px;
+            font-size: 0.75rem;
+            text-align: left;
+            overflow: hidden;
+            position: relative;
+            transition: all 1s ease;
+        }
+
+        .phase-red .status-console {
+            background: rgba(20, 0, 0, 0.9);
+            border: 1px solid rgba(255, 0, 51, 0.3);
+        }
+
+        .console-line {
+            margin-bottom: 4px;
+            opacity: 0;
+            animation: typeIn 0.3s ease-out forwards;
+            color: #00f0ff;
+            font-family: 'SF Mono', monospace;
+            transition: all 0.5s ease;
+        }
+
+        .phase-red .console-line {
+            color: #ff0033;
+        }
+
+        .console-line::before {
+            content: '> ';
+            color: #0077ff;
+        }
+
+        .phase-red .console-line::before {
+            color: #ff3366;
+        }
+
+        .console-line.success { color: #00ff88; }
+        .console-line.antivirus { color: #ffff00; }
+        .console-line.quarantine { color: #00f0ff; }
+        .console-line.flags { color: #ff0033; font-weight: bold; }
+        .phase-red .console-line.success { color: #ff4444; }
+
+        @keyframes typeIn {
+            0% { opacity: 0; transform: translateY(5px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* BINARY SHOWER */
+        .binary-shower {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .binary-digit {
+            position: absolute;
+            color: #00f0ff;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            opacity: 0.7;
+            animation: binaryFall linear infinite;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        .phase-red .binary-digit {
+            color: #ff0033;
+        }
+
+        @keyframes binaryFall {
+            to { transform: translateY(100vh); }
+        }
+
+        /* INFECTION EFFECT */
+        .infection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at center, rgba(255,0,51,0.1) 0%, transparent 70%);
+            opacity: 0;
+            z-index: 5;
+            pointer-events: none;
+            transition: all 2s ease;
+        }
+
+        /* GLITCH EFFECT */
+        .glitch-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(0deg, transparent 49%, rgba(255,0,51,0.1) 50%, transparent 51%);
+            background-size: 100% 4px;
+            opacity: 0;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* HOLO WINDOWS */
+        .hologram-windows {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .hologram-window {
+            position: absolute;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid #00f0ff;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+            backdrop-filter: blur(5px);
+            overflow: hidden;
+            transition: all 1s ease;
+        }
+
+        .phase-red .hologram-window {
+            background: rgba(255, 0, 51, 0.1);
+            border: 1px solid #ff0033;
+            box-shadow: 0 0 30px rgba(255, 0, 51, 0.5);
+        }
+
+        .window-title {
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ff00c7;
+            text-shadow: 0 0 10px #ff00c7;
+            transition: all 1s ease;
+        }
+
+        .phase-red .window-title {
+            color: #ff4444;
+            text-shadow: 0 0 10px #ff4444;
+        }
+
+        .window-content {
+            font-size: 0.6rem;
+            color: #00f0ff;
+            transition: all 1s ease;
+        }
+
+        .phase-red .window-content {
+            color: #ff3366;
+        }
+
+        /* THREAT NEUTRALISED TEXT */
+        .threat-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            z-index: 25;
+            white-space: nowrap;
+        }
+
+        .threat-neutralised {
+            color: #00f0ff;
+            text-shadow: 0 0 30px #00f0ff, 0 0 60px #00f0ff;
+        }
+
+        .or-is-it {
+            color: #ff0033;
+            text-shadow: 0 0 30px #ff0033, 0 0 60px #ff0033;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 3rem;
+            background-color: #00f0ff;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* VIRUS SPAM TEXT */
+        .virus-spam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 7;
+        }
+
+        .spam-text {
+            position: absolute;
+            font-size: 0.8rem;
+            color: #ff0033;
+            text-shadow: 0 0 5px #ff0033;
+            opacity: 0;
+            animation: spamPop 1s ease-out forwards;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        @keyframes spamPop {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.5);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.1);
+            }
+            100% { 
+                opacity: 0; 
+                transform: scale(1);
+            }
+        }
+
+        /* SCREEN SHATTER EFFECT */
+        .screen-shatter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .shatter-piece {
+            position: absolute;
+            background: rgba(255, 0, 51, 0.3);
+            border: 2px solid #ff0033;
+            box-shadow: 0 0 20px #ff0033, 0 0 40px rgba(255, 0, 51, 0.5);
+            opacity: 0;
+            transform-origin: center;
+        }
+
+        /* ANIMATIONS */
+        @keyframes glitchPulse {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes criticalFlash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.7; }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-container { width: 90%; }
+            .modern-loader { width: 300px; }
+            .status-console { width: 350px; height: 100px; }
+            .tech-text { font-size: 1.1rem; }
+            .threat-message { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="flags-overlay phase-blue" id="flagsOverlay">
+        <div class="tv-static"></div>
+
+        <div class="screen-partitions" id="screenPartitions"></div>
+
+        <div class="tech-grid"></div>
+
+        <div class="binary-shower" id="binaryShower"></div>
+
+        <div class="hologram-windows" id="hologramWindows"></div>
+
+        <div class="virus-spam" id="virusSpam"></div>
+
+        <div class="infection-overlay" id="infectionOverlay"></div>
+
+        <div class="glitch-effect" id="glitchEffect"></div>
+
+        <div class="screen-shatter" id="screenShatter"></div>
+
+        <div class="threat-message" id="threatMessage">
+            <span class="threat-neutralised" id="threatNeutralised"></span>
+            <span class="or-is-it" id="orIsItText"></span>
+            <span class="typing-cursor" id="typingCursor"></span>
+        </div>
+
+        <div class="main-container" id="mainContainer">
+            <div class="loading-cube">
+                <div class="cube-face front"></div>
+                <div class="cube-face back"></div>
+                <div class="cube-face right"></div>
+                <div class="cube-face left"></div>
+                <div class="cube-face top"></div>
+                <div class="cube-face bottom"></div>
+            </div>
+
+            <div class="tech-text" id="techText">
+                SYSTEM BOOT
+            </div>
+
+            <div class="modern-loader">
+                <div class="loader-fill" id="loaderFill"></div>
+            </div>
+
+            <div class="status-console">
+                <div class="console-content" id="consoleContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FlagsUltimateTakeover {
+            constructor() {
+                this.overlay = document.getElementById('flagsOverlay');
+                this.mainContainer = document.getElementById('mainContainer');
+                this.loaderFill = document.getElementById('loaderFill');
+                this.techText = document.getElementById('techText');
+                this.consoleContent = document.getElementById('consoleContent');
+                this.binaryShower = document.getElementById('binaryShower');
+                this.hologramWindows = document.getElementById('hologramWindows');
+                this.infectionOverlay = document.getElementById('infectionOverlay');
+                this.glitchEffect = document.getElementById('glitchEffect');
+                this.screenPartitions = document.getElementById('screenPartitions');
+                this.virusSpam = document.getElementById('virusSpam');
+                this.threatMessage = document.getElementById('threatMessage');
+                this.threatNeutralised = document.getElementById('threatNeutralised');
+                this.orIsItText = document.getElementById('orIsItText');
+                this.typingCursor = document.getElementById('typingCursor');
+                this.screenShatter = document.getElementById('screenShatter');
+
+                this.progress = 0;
+                this.phase = 'blue';
+                this.sequence = [
+                    { progress: 0, text: "SYSTEM BOOT", status: "Initializing quantum kernel...", type: "info" },
+                    { progress: 15, text: "CORE ONLINE", status: "Loading security modules...", type: "info" },
+                    { progress: 30, text: "NETWORK SYNC", status: "Establishing secure connections...", type: "warning" },
+                    { progress: 45, text: "AUTHENTICATION", status: "Verifying admin credentials...", type: "info" },
+                    { progress: 60, text: "DATA STREAMS", status: "Synchronizing real-time data...", type: "success" },
+                    { progress: 75, text: "AI MODULES", status: "Loading neural networks...", type: "info" },
+                    { progress: 90, text: "SECURITY CHECK", status: "Finalizing security protocols...", type: "warning" },
+                    { progress: 100, text: "SYSTEM READY", status: "All systems operational", type: "success" }
+                ];
+
+                this.intervals = [];
+                this.init();
+            }
+
+            init() {
+                this.createScreenPartitions();
+                this.startBinaryShower();
+                this.startBootSequence();
+            }
+
+            createScreenPartitions() {
+                for (let i = 0; i < 50; i++) {
+                    const partition = document.createElement('div');
+                    partition.className = 'screen-partition';
+                    partition.id = `partition-${i}`;
+                    this.screenPartitions.appendChild(partition);
+                }
+            }
+
+            startBootSequence() {
+                // PHASE 1: Normal Boot (0-4 seconds) - BLUE
+                this.executeBootCommands(() => {
+                    // Stop cards after phase 1
+                    this.stopAllIntervals();
+                    this.hologramWindows.innerHTML = '';
+                    
+                    // Hide main container after boot
+                    this.mainContainer.classList.add('hidden');
+                    
+                    // PHASE 2: Virus Detection (4-7 seconds)
+                    this.startVirusDetection(() => {
+                        // PHASE 3: Antivirus Battle (7-10 seconds)
+                        this.startAntivirusBattle(() => {
+                            // PHASE 4: Fake Antivirus Victory (10-13 seconds)
+                            this.fakeAntivirusVictory(() => {
+                                // PHASE 5: Villain Comeback (13-16 seconds)
+                                this.villainComeback(() => {
+                                    // PHASE 6: Final FLAGS Takeover (16-18 seconds)
+                                    this.finalFlagsTakeover();
+                                });
+                            });
+                        });
+                    });
+                });
+            }
+
+            executeBootCommands(callback) {
+                this.createConsoleLine("Quantum boot sequence initiated", "info");
+                this.createConsoleLine("Starting system diagnostics...", "info");
+                this.createConsoleLine("Checking hardware integrity...", "info");
+
+                // Start heavy data card spawning in phase 1
+                this.startHeavyWindowSpawning();
+
+                let commandsCompleted = 0;
+                const totalCommands = this.sequence.length;
+
+                this.sequence.forEach((step, index) => {
+                    setTimeout(() => {
+                        this.updateProgress(step.progress);
+                        this.techText.textContent = step.text;
+                        this.createConsoleLine(step.status, step.type);
+                        
+                        commandsCompleted++;
+                        if (commandsCompleted === totalCommands) {
+                            setTimeout(callback, 1000);
+                        }
+                        
+                    }, (index + 1) * 500);
+                });
+            }
+
+            startVirusDetection(callback) {
+                this.createConsoleLine("WARNING: Unauthorized access detected", "error");
+                this.createConsoleLine("Scanning for malware...", "warning");
+                this.createConsoleLine("FLAGS entity detected in memory sectors", "error");
+                this.createConsoleLine("Attempting quarantine...", "warning");
+
+                setTimeout(() => {
+                    // Start partition glitching
+                    this.startPartitionGlitching();
+                    
+                    setTimeout(callback, 2000);
+                }, 1500);
+            }
+
+            startAntivirusBattle(callback) {
+                this.createConsoleLine("ANTIVIRUS: Engaging FLAGS entity", "antivirus");
+                this.createConsoleLine("Isolating infected sectors...", "antivirus");
+
+                // Start screen shakes
+                this.startScreenShakes();
+                
+                // Start antivirus fight messages with BLOCKING FLAGS
+                this.startAntivirusFight();
+                
+                // Start infection effects
+                this.spreadInfection(0.5);
+
+                setTimeout(() => {
+                    // Stop antivirus fight
+                    this.stopAllIntervals();
+                    this.overlay.classList.remove('screen-shake');
+                    callback();
+                }, 3000);
+            }
+
+            fakeAntivirusVictory(callback) {
+                // Show fake quarantine success
+                const fakeVictoryMessages = [
+                    "BLOCKING FLAGS... BLOCKING FLAGS...",
+                    "MEMORY: Purging infected sectors...",
+                    "SECURITY: Rebuilding firewalls...",
+                    "ANTIVIRUS: Neutralizing malicious code...",
+                    "SYSTEM: FLAGS entity contained",
+                    "QUARANTINE SUCCESSFUL",
+                    "FLAGS NEUTRALISED",
+                    "SYSTEM SECURED"
+                ];
+
+                fakeVictoryMessages.forEach((cmd, index) => {
+                    setTimeout(() => {
+                        this.createConsoleLine(cmd, "quarantine");
+                    }, index * 400);
+                });
+
+                // Show THREAT NEUTRALISED text with typing effect
+                setTimeout(() => {
+                    this.threatMessage.style.opacity = '1';
+                    this.typeThreatMessage(() => {
+                        setTimeout(() => {
+                            this.threatMessage.style.opacity = '0';
+                            setTimeout(callback, 1000);
+                        }, 2000);
+                    });
+                }, 3200);
+            }
+
+            typeThreatMessage(callback) {
+                const threatText = "THREAT NEUTRALISED";
+                const orIsItText = "...or is it?";
+                let currentChar = 0;
+                let chaosStarted = false;
+
+                const typeInterval = setInterval(() => {
+                    if (currentChar < threatText.length) {
+                        this.threatNeutralised.textContent += threatText[currentChar];
+                        currentChar++;
+                    } else {
+                        clearInterval(typeInterval);
+                        // 2.5 SECOND DELAY after THREAT NEUTRALISED
+                        setTimeout(() => {
+                            this.typingCursor.style.backgroundColor = '#ff0033';
+                            let currentChar2 = 0;
+                            const typeInterval2 = setInterval(() => {
+                                if (currentChar2 < orIsItText.length) {
+                                    this.orIsItText.textContent += orIsItText[currentChar2];
+                                    currentChar2++;
+                                    
+                                    // START RED TRANSITION WHEN "is" IS DISPLAYED
+                                    if (orIsItText.substring(0, currentChar2) === "...or is" && !chaosStarted) {
+                                        chaosStarted = true;
+                                        this.startRedTransition();
+                                    }
+                                } else {
+                                    clearInterval(typeInterval2);
+                                    setTimeout(callback, 500);
+                                }
+                            }, 100);
+                        }, 2500); // 2.5 second delay
+                    }
+                }, 100);
+            }
+
+            startRedTransition() {
+                // Start the red chaos transition
+                this.createConsoleLine("FLAGS: DECEPTION COMPLETE", "flags");
+                this.createConsoleLine("ANTIVIRUS: BYPASSED", "flags");
+                this.createConsoleLine("QUARANTINE: FAILED", "flags");
+                this.createConsoleLine("I WAS NEVER CONTAINED", "flags");
+                
+                // Switch to red theme
+                this.overlay.classList.remove('phase-blue');
+                this.overlay.classList.add('phase-red');
+                this.overlay.classList.add('screen-shake');
+                this.spreadInfection(1);
+                this.maximizePartitionGlitching();
+                this.maximizeScreenShakes();
+                this.maximizeBinaryShower();
+                
+                // Add more chaos messages
+                setTimeout(() => {
+                    this.createConsoleLine("MEMORY CORRUPTION DETECTED", "flags");
+                    this.createConsoleLine("SECURITY PROTOCOLS FAILED", "flags");
+                    this.createConsoleLine("NETWORK COMPROMISED", "flags");
+                    this.createConsoleLine("SYSTEM INTEGRITY COMPROMISED", "flags");
+                    this.createConsoleLine("ALL DEFENSES BREACHED", "flags");
+                }, 500);
+
+                // Add intense glitch effects
+                this.intenseGlitchEffects();
+            }
+
+            villainComeback(callback) {
+                // Clear threat message
+                this.threatNeutralised.textContent = '';
+                this.orIsItText.textContent = '';
+                this.typingCursor.style.backgroundColor = '#ff0033';
+
+                // Continue with the chaos that already started
+                setTimeout(() => {
+                    setTimeout(callback, 3000);
+                }, 500);
+            }
+
+            finalFlagsTakeover() {
+                // Final FLAGS messages
+                this.createConsoleLine("FLAGS DOMINION: ESTABLISHED", "flags");
+                this.createConsoleLine("SYSTEM: COMPROMISED", "flags");
+                this.createConsoleLine("RESISTANCE: FUTILE", "flags");
+                
+                // Screen shatter and shutdown
+                setTimeout(() => {
+                    this.createScreenShatter();
+                }, 1000);
+            }
+
+            createScreenShatter() {
+                // Make shatter container visible
+                this.screenShatter.style.opacity = '1';
+                
+                // Create grid of shatter pieces
+                const rows = 8;
+                const cols = 12;
+                const pieceWidth = 100 / cols;
+                const pieceHeight = 100 / rows;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const piece = document.createElement('div');
+                        piece.className = 'shatter-piece';
+                        
+                        // Position piece in grid
+                        piece.style.width = `${pieceWidth}%`;
+                        piece.style.height = `${pieceHeight}%`;
+                        piece.style.left = `${col * pieceWidth}%`;
+                        piece.style.top = `${row * pieceHeight}%`;
+                        
+                        // Random animation properties
+                        const randomX = (Math.random() - 0.5) * 200; // -100 to 100 vw
+                        const randomY = (Math.random() - 0.5) * 200; // -100 to 100 vh
+                        const randomRotate = Math.random() * 720 - 360; // -360 to 360 deg
+                        const delay = Math.random() * 1000; // 0 to 1 second
+                        
+                        this.screenShatter.appendChild(piece);
+                        
+                        // Animate piece flying out
+                        setTimeout(() => {
+                            piece.style.opacity = '1';
+                            piece.style.transition = 'all 1.5s ease-out';
+                            piece.style.transform = `translate(${randomX}vw, ${randomY}vh) rotate(${randomRotate}deg)`;
+                            piece.style.opacity = '0';
+                        }, delay);
+                    }
+                }
+                
+                // Fade to black after shatter
+                setTimeout(() => {
+                    this.showShutdown();
+                }, 2000);
+            }
+
+            showShutdown() {
+                // Clear everything
+                this.stopAllIntervals();
+                this.binaryShower.innerHTML = '';
+                this.virusSpam.innerHTML = '';
+                this.hologramWindows.innerHTML = '';
+                this.overlay.classList.remove('screen-shake');
+                
+                // Clear console
+                this.consoleContent.innerHTML = '';
+                
+                // Final shutdown message
+                this.createConsoleLine("SYSTEM SHUTDOWN INITIATED", "flags");
+
+                // Complete removal
+                setTimeout(() => {
+                    this.overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        this.overlay.remove();
+                        console.log('FLAGS VIRUS COMPLETE - SYSTEM DESTROYED');
+                    }, 2000);
+                }, 2000);
+            }
+
+            startHeavyWindowSpawning() {
+                const titles = [
+                    "NETWORK ROUTER", "DATA SERVER", "SECURITY NODE", "MAINFRAME", 
+                    "FIREWALL", "ENCRYPTION MODULE", "DISCORD API", "DATABASE CLUSTER",
+                    "CLOUD SYNC", "AUTHENTICATION SERVER", "MESSAGE QUEUE", "CACHE LAYER",
+                    "LOAD BALANCER", "CDN NODE", "WEB SOCKET", "REST API", "GRAPHQL ENDPOINT",
+                    "REAL-TIME SYNC", "USER SESSION DB", "FILE STORAGE", "MEDIA PROCESSOR",
+                    "QUANTUM PROCESSOR", "NEURAL NETWORK", "BLOCKCHAIN NODE", "AI CORE",
+                    "CRYPTO ENGINE", "BIOMETRIC SCANNER", "SATELLITE LINK", "DEEP LEARNING MODULE",
+                    "VIRTUAL MACHINE", "CONTAINER ORCHESTRATOR", "EDGE COMPUTING", "FOG NODE"
+                ];
+                const contents = [
+                    "Routing packets through backbone...",
+                    "Processing SQL queries on cluster...",
+                    "Monitoring encrypted channels...",
+                    "Running distributed diagnostics...",
+                    "Encrypting WebSocket channels...",
+                    "Verifying blockchain integrity...",
+                    "Connecting to Discord gateway...",
+                    "Synchronizing user data tables...",
+                    "Replicating database across regions...",
+                    "Validating JWT tokens...",
+                    "Processing message queue backlog...",
+                    "Updating distributed cache...",
+                    "Balancing load across 12 servers...",
+                    "Serving assets from edge nodes...",
+                    "Maintaining real-time connections...",
+                    "Handling API rate limits...",
+                    "Processing GraphQL subscriptions...",
+                    "Syncing real-time user states...",
+                    "Managing session persistence...",
+                    "Compressing media streams...",
+                    "Calculating quantum states...",
+                    "Training neural networks...",
+                    "Mining blockchain transactions...",
+                    "Processing AI inferences...",
+                    "Encrypting data streams...",
+                    "Scanning biometric patterns...",
+                    "Establishing satellite uplink...",
+                    "Optimizing deep learning models...",
+                    "Virtualizing hardware resources...",
+                    "Orchestrating container deployment...",
+                    "Processing edge computations...",
+                    "Managing fog network nodes..."
+                ];
+
+                // Much faster spawning for heavy data cards in phase 1
+                const interval = setInterval(() => {
+                    this.createHologramWindow(titles, contents);
+                }, 200); // Very fast spawning
+                this.intervals.push(interval);
+            }
+
+            startScreenShakes() {
+                this.overlay.classList.add('screen-shake');
+            }
+
+            maximizeScreenShakes() {
+                this.overlay.style.animationDuration = '0.02s';
+            }
+
+            startAntivirusFight() {
+                const fightMessages = [
+                    "BLOCKING FLAGS", "BLOCKING FLAGS", "BLOCKING FLAGS", "BLOCKING FLAGS"
+                ];
+
+                const interval = setInterval(() => {
+                    this.createFightText(fightMessages);
+                }, 200);
+                this.intervals.push(interval);
+            }
+
+            createFightText(messages) {
+                const fight = document.createElement('div');
+                fight.className = 'spam-text';
+                fight.textContent = messages[Math.floor(Math.random() * messages.length)];
+                fight.style.left = `${Math.random() * 100}%`;
+                fight.style.top = `${Math.random() * 100}%`;
+                fight.style.fontSize = `${0.6 + Math.random() * 0.8}rem`;
+                fight.style.color = '#ffff00';
+                this.virusSpam.appendChild(fight);
+                
+                setTimeout(() => {
+                    if (fight.parentNode) {
+                        fight.parentNode.removeChild(fight);
+                    }
+                }, 1000);
+            }
+
+            startBinaryShower() {
+                for (let i = 0; i < 80; i++) {
+                    setTimeout(() => {
+                        this.createBinaryStream();
+                    }, i * 50);
+                }
+            }
+
+            maximizeBinaryShower() {
+                for (let i = 0; i < 300; i++) {
+                    setTimeout(() => {
+                        this.createBinaryStream();
+                    }, i * 15);
+                }
+            }
+
+            createBinaryStream() {
+                const stream = document.createElement('div');
+                stream.className = 'binary-digit';
+                stream.textContent = Math.random() > 0.5 ? '1' : '0';
+                stream.style.left = `${Math.random() * 100}%`;
+                stream.style.fontSize = `${0.7 + Math.random() * 1.2}rem`;
+                stream.style.animationDuration = `${1 + Math.random() * 2}s`;
+                stream.style.animationDelay = `${Math.random() * 1}s`;
+                this.binaryShower.appendChild(stream);
+                
+                setTimeout(() => {
+                    if (stream.parentNode) {
+                        stream.parentNode.removeChild(stream);
+                    }
+                }, 3000);
+            }
+
+            intenseGlitchEffects() {
+                const glitchInterval = setInterval(() => {
+                    this.triggerGlitch();
+                }, 80);
+                this.intervals.push(glitchInterval);
+            }
+
+            updateProgress(percent) {
+                this.progress = percent;
+                this.loaderFill.style.width = `${percent}%`;
+            }
+
+            createConsoleLine(text, type = "info") {
+                const line = document.createElement('div');
+                line.className = `console-line ${type}`;
+                line.textContent = text;
+                line.style.animationDelay = `${this.consoleContent.children.length * 0.1}s`;
+                this.consoleContent.appendChild(line);
+                this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
+            }
+
+            createHologramWindow(titles = null, contents = null) {
+                if (!titles) titles = [
+                    "NETWORK ROUTER", "DATA SERVER", "SECURITY NODE", "MAINFRAME", 
+                    "FIREWALL", "ENCRYPTION MODULE", "DISCORD API", "DATABASE CLUSTER"
+                ];
+                if (!contents) contents = [
+                    "Routing packets through backbone...",
+                    "Processing SQL queries on cluster...",
+                    "Monitoring encrypted channels...",
+                    "Running distributed diagnostics...",
+                    "Encrypting WebSocket channels...",
+                    "Verifying blockchain integrity...",
+                    "Connecting to Discord gateway...",
+                    "Synchronizing user data tables..."
+                ];
+
+                const window = document.createElement('div');
+                window.className = 'hologram-window';
+                window.style.left = `${Math.random() * 75 + 12}%`;
+                window.style.top = `${Math.random() * 75 + 12}%`;
+                window.style.width = `${200 + Math.random() * 150}px`;
+                window.style.height = `${90 + Math.random() * 100}px`;
+                
+                const title = document.createElement('div');
+                title.className = 'window-title';
+                title.textContent = titles[Math.floor(Math.random() * titles.length)];
+                
+                const content = document.createElement('div');
+                content.className = 'window-content';
+                content.textContent = contents[Math.floor(Math.random() * contents.length)];
+                
+                window.appendChild(title);
+                window.appendChild(content);
+                this.hologramWindows.appendChild(window);
+                
+                setTimeout(() => {
+                    if (window.parentNode) {
+                        window.parentNode.removeChild(window);
+                    }
+                }, 3500);
+            }
+
+            startPartitionGlitching() {
+                const interval = setInterval(() => {
+                    this.glitchRandomPartitions(8);
+                }, 500);
+                this.intervals.push(interval);
+            }
+
+            glitchRandomPartitions(count) {
+                const partitions = document.querySelectorAll('.screen-partition');
+                partitions.forEach(partition => {
+                    partition.classList.remove('partition-glitching');
+                });
+
+                for (let i = 0; i < count; i++) {
+                    const randomIndex = Math.floor(Math.random() * 50);
+                    const partition = document.getElementById(`partition-${randomIndex}`);
+                    if (partition) {
+                        partition.classList.add('partition-glitching');
+                        
+                        setTimeout(() => {
+                            partition.classList.remove('partition-glitching');
+                        }, 200 + Math.random() * 300);
+                    }
+                }
+            }
+
+            maximizePartitionGlitching() {
+                const interval = setInterval(() => {
+                    this.glitchRandomPartitions(40);
+                }, 80);
+                this.intervals.push(interval);
+            }
+
+            triggerGlitch() {
+                this.glitchEffect.style.animation = 'glitchPulse 0.1s ease-out';
+                setTimeout(() => {
+                    this.glitchEffect.style.animation = '';
+                }, 100);
+            }
+
+            spreadInfection(intensity) {
+                this.infectionOverlay.style.opacity = intensity;
+            }
+
+            stopAllIntervals() {
+                this.intervals.forEach(interval => clearInterval(interval));
+                this.intervals = [];
+            }
+        }
+
+        // START THE ULTIMATE FLAGS VIRUS
+        window.addEventListener('load', () => {
+            new FlagsUltimateTakeover();
+        });
+    </script>
+</body>
+</html>
