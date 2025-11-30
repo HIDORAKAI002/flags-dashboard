@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ bot_info.name }} - Discord Bot</title>
-    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+ 
 
     <style>
         /* Base Styles Inspired by Reflect Notes & Original */
@@ -499,12 +499,7 @@
          footer a { color: var(--primary-color); text-decoration: none; margin: 0 10px; }
          footer a:hover { text-decoration: underline; }
 
-        /* CAPTCHA Styles */
-        #captcha-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 9999; display: flex; justify-content: center; align-items: center; color: #ffffff; font-family: sans-serif; }
-        #captcha-modal { background: #2c2f33; padding: 2rem 3rem; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        #captcha-modal h2 { margin-top: 0; margin-bottom: 0.5rem; }
-        #captcha-modal p { margin-top: 0; margin-bottom: 1.5rem; max-width: 320px; line-height: 1.5; color: #dcddde; }
-        #captcha-modal .h-captcha { display: inline-block; }
+        
 
     </style>
 </head>
@@ -513,17 +508,7 @@
 
     <audio id="mockup-audio" src="{{ url_for('static', filename='blinding_lights.mp3') }}"></audio>
 
-    {% if not session.get('is_human') %}
-    <div id="captcha-overlay">
-         <div id="captcha-modal">
-            <h2>Please Verify You Are Human</h2>
-            <p>This one-time check helps us prevent bots and ensure a fair experience for everyone.</p>
-            <div class="h-captcha"
-                 data-sitekey="5b628e14-89f8-47cc-a510-dada58cc7178" data-callback="onCaptchaSuccess">
-            </div>
-        </div>
-    </div>
-    {% endif %}
+    
 
     <header>
         <div class="bot-info">
@@ -836,23 +821,7 @@
     </footer>
 
     <script>
-        // --- CAPTCHA Logic ---
-        function onCaptchaSuccess(token) {
-            fetch('/verify-captcha', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ token: token }), 
-            })
-            .then(response => response.json())
-            .then(data => { 
-                if (data.success) { 
-                    window.location.reload(); 
-                } else { 
-                    alert("CAPTCHA failed."); 
-                } 
-            })
-            .catch(error => { console.error('Error:', error); alert("CAPTCHA error."); });
-        }
+        
 
         // --- Core Interactions ---
         function startInteractions() {
@@ -969,9 +938,7 @@
 
         // --- Initialization and Secret Knock ---
         document.addEventListener('DOMContentLoaded', () => {
-            if (!document.getElementById('captcha-overlay')) { 
-                startInteractions(); 
-            }
+    startInteractions();
             const logo = document.querySelector('.bot-info h1'); // Target H1
             if (logo) { 
                  let clickCount = 0; let lastClickTime = 0; 
