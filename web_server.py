@@ -1,6 +1,6 @@
 # web_server.py
 import eventlet
-eventlet.monkey_patch() # <--- THIS FIXES THE RECURSION ERROR
+eventlet.monkey_patch()
 
 from flask import Flask, request, redirect, render_template, session, jsonify
 from flask_socketio import SocketIO
@@ -11,17 +11,15 @@ import os
 from functools import wraps
 import json
 import urllib.parse as up
+from datetime import datetime, timedelta
 
 # --- CONFIGURATION ---
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_insecure_key_for_dev")
-
-# NO CAPTCHA KEY NEEDED
-
-# Default to port 5000 for local, but Render sets PORT env var
 PRIMARY_DOMAIN = os.environ.get("PRIMARY_DOMAIN", "http://127.0.0.1:5000")
+MASTER_USER_ID = "794610250375364629" # Your ID
 
 REDIRECT_URI = f"{PRIMARY_DOMAIN}/callback"
 BOT_INVITE_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&permissions=8&scope=bot%20applications.commands"
@@ -45,8 +43,6 @@ if DB_URL:
         print("Web Server: Connected to Database.")
     except Exception as e:
         print(f"Web Server: Failed to connect to DB: {e}")
-else:
-    print("Web Server: DB_URL not set.")
 
 # --- FLASK SETUP ---
 app = Flask(__name__)
@@ -87,11 +83,6 @@ def discord_api_request(endpoint, method="GET", data=None):
     try:
         if method == "GET": resp = requests.get(url, headers=headers)
         elif method == "POST": resp = requests.post(url, headers=headers, json=data)
-        
-        if resp.status_code == 429:
-            print("Rate limited by Discord API")
-            return None
-            
         return resp.json() if resp.status_code in [200, 201] else None
     except: return None
 
@@ -106,6 +97,14 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session: return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated_function
+
+def owner_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session or str(session['user_id']) != MASTER_USER_ID:
+            return redirect('/')
         return f(*args, **kwargs)
     return decorated_function
 
@@ -148,7 +147,6 @@ def callback():
         
         return redirect('/select-server')
     except Exception as e:
-        print(f"Login Error: {e}")
         return f"Login Error: {e}", 500
 
 @app.route('/logout')
@@ -298,6 +296,92 @@ def update_dashboard(guild_id):
     except: conn.rollback()
     finally: return_db(conn)
     return redirect(f'/dashboard/{guild_id}')
+
+# --- OWNER DASHBOARD & APIs ---
+
+@app.route('/owner')
+@login_required
+@owner_required
+def owner_dashboard():
+    conn = get_db()
+    if not conn: return "DB Error", 500
+    
+    stats = {'total_servers': 0, 'total_users': 0}
+    servers_list = []
+    
+    try:
+        # Get Bot's Guilds from Discord API
+        bot_guilds = discord_api_request("/users/@me/guilds") or []
+        stats['total_servers'] = len(bot_guilds)
+        
+        with conn.cursor() as cursor:
+            # Total Users
+            cursor.execute("SELECT COUNT(*) FROM users")
+            stats['total_users'] = cursor.fetchone()[0]
+            
+            # Get deactivated status
+            cursor.execute("SELECT guild_id, is_deactivated FROM guilds")
+            deactivated_map = {row[0]: row[1] for row in cursor.fetchall()}
+
+        for g in bot_guilds:
+            # Note: Member count isn't in /users/@me/guilds, but we can try to fetch specific guild info
+            # Doing this for every guild might be slow, so for now we assume placeholder or fetch on demand
+            servers_list.append({
+                'id': g['id'],
+                'name': g['name'],
+                'icon_url': f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png" if g['icon'] else "https://cdn.discordapp.com/embed/avatars/0.png",
+                'member_count': "?", # Requires individual fetch
+                'is_deactivated': deactivated_map.get(g['id'], False),
+                'has_admin': (int(g['permissions']) & 0x8) == 0x8
+            })
+
+    finally:
+        return_db(conn)
+
+    return render_template('owner_dashboard.html', 
+                           user={"name": session['user_name'], "avatar_url": session['avatar_url']},
+                           stats=stats, servers=servers_list,
+                           # Pass empty data for charts for now
+                           usage_chart_labels=[], usage_chart_data=[],
+                           usage_server_labels=[], usage_server_data=[],
+                           chart_labels=[], chart_data=[])
+
+@app.route('/owner/guild/<guild_id>/toggle', methods=['POST'])
+@login_required
+@owner_required
+def toggle_guild(guild_id):
+    data = request.get_json()
+    active = data.get('active', True)
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            # Update is_deactivated. If active=True, is_deactivated=False
+            cursor.execute("INSERT INTO guilds (guild_id, is_deactivated) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET is_deactivated = %s", 
+                           (str(guild_id), not active, not active))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        return_db(conn)
+
+@app.route('/api/activity_heatmap/<guild_id>')
+@login_required
+def activity_heatmap(guild_id):
+    # Mock data for now to prevent 404s and chart errors
+    return jsonify({
+        'success': True,
+        'labels': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'data': [0, 0, 0, 0, 0, 0, 0] 
+    })
+
+@app.route('/owner/announce', methods=['POST'])
+@login_required
+@owner_required
+def owner_announce():
+    # This would need to talk to the bot via DB or IPC. 
+    # For decoupled setup, we can insert into a 'pending_announcements' table that the bot checks.
+    return "Announcement queued (Logic to be implemented via DB poll)", 200
 
 @app.route('/terms')
 def terms(): return render_template('tos.html', bot_info=get_bot_info())
